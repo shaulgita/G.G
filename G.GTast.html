@@ -21,13 +21,14 @@
   th { background:#1f2a44; color:#fff; }
 
   .total { margin-top:14px; font-size:18px; font-weight:800; }
+  .note { margin-top:8px; font-size:12px; color:#374151; }
   .delete-btn { background:none; border:none; font-size:18px; cursor:pointer; }
 
   .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); align-items:center; justify-content:center; }
   .modal .box { background:#fff; padding:16px; border-radius:12px; width:min(520px,92vw); }
 
   /* ========= PDF ========= */
-  /* חשוב: לא display:none כדי ש-html2canvas יוכל לצלם גם כשיש הרבה שורות */
+  /* לא display:none כדי ש-html2canvas יצליח לצלם גם כשיש הרבה שורות */
   #pdfWrap { position:fixed; left:-9999px; top:0; width:210mm; }
 
   .pdf {
@@ -60,11 +61,13 @@
   .pdf th { background:#1f2a44; color:#fff; padding:6px; }
   .pdf td { border:1px solid #ddd; padding:6px; font-size:12px; }
 
-  /* רב-עמודים תקין: כותרת טבלה חוזרת + שורות לא נשברות באמצע */
+  /* רב-עמודים תקין */
   .pdf thead { display: table-header-group; }
   .pdf tfoot { display: table-footer-group; }
   .pdf table { page-break-inside: auto; }
   .pdf tr { page-break-inside: avoid; page-break-after: auto; }
+
+  .pdf-note { margin-top:8px; font-size:12px; color:#111827; }
 
   /* תיקון RTL/LTR בתוך טקסט עברי */
   .ltr {
@@ -89,7 +92,11 @@
 
 <div class="section">
   <h3>פריטים</h3>
-  <button class="primary" onclick="openModal()">➕ הוסף פריט</button>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="primary" onclick="openModal()">➕ הוסף פריט</button>
+    <button class="secondary" onclick="addColorChange()">🎨 שינוי גוון (₪500)</button>
+  </div>
 
   <table>
     <thead>
@@ -109,6 +116,7 @@
   <div class="total">
     סה״כ: ₪ <span id="grandTotal">0.00</span>
   </div>
+  <div class="note">* המחירים אינם כוללים מע״מ</div>
 
   <button class="primary" style="margin-top:12px" onclick="generatePDF()">📄 הפק הצעת מחיר</button>
 </div>
@@ -152,7 +160,7 @@
   </div>
 </div>
 
-<!-- PDF (נמצא מחוץ למסך בשביל צילום) -->
+<!-- PDF (מחוץ למסך לצילום) -->
 <div id="pdfWrap">
   <div id="pdfContent" class="pdf">
 
@@ -183,22 +191,26 @@
       <tbody id="pdfTable"></tbody>
     </table>
 
-    <h3>סה״כ: ₪ <span id="pdfTotal"></span></h3>
+    <div class="pdf-note">* המחירים אינם כוללים מע״מ</div>
+
+    <h3 style="margin-top:10px;">סה״כ: ₪ <span id="pdfTotal"></span></h3>
   </div>
 </div>
 
 <script>
-/* ====== עזר: מציג מספרים/סלאש/× בתוך SPAN LTR בלי רווחים ====== */
+/* ==== פורמט נכון ל-RTL/LTR: סלאש בין מילים + מספרים/מידות בלי רווחים ==== */
 function formatItemHTML(text) {
-  let s = String(text);
+  let s = String(text || "").replace(/\s+/g, " ").trim();
 
-  // 80/80 -> <span dir="ltr">80/80</span>
+  // 1) סלאש בין מילים (עברית/אנגלית) -> נשאר באמצע ולא בורח
+  // משתמשים ב-RLM (\u200F) סביב "/"
+  s = s.replace(/([\u0590-\u05FFA-Za-z])\s*\/\s*([\u0590-\u05FFA-Za-z])/gu, "$1 \u200F/\u200F $2");
+
+  // 2) שברים מספריים כמו 80/80 -> LTR (בלי רווחים)
   s = s.replace(/(\d+)\s*\/\s*(\d+)/g, '<span class="ltr">$1/$2</span>');
 
-  // 70×70 או 70x70 -> <span dir="ltr">70×70</span>
+  // 3) מידות כמו 70×70 או 70x70 -> LTR (בלי רווחים)
   s = s.replace(/(\d+)\s*[x×]\s*(\d+)/gi, '<span class="ltr">$1×$2</span>');
-
-  // אם יש 3/10 בתוך טקסט (כמו קורה 3/10) זה כבר נתפס למעלה.
 
   return s;
 }
@@ -271,11 +283,43 @@ Object.keys(PRICE_LIST).forEach(name => {
   itemSelect.appendChild(o);
 });
 
-/* ====== UI ====== */
 function openModal(){ modal.style.display="flex"; }
 function closeModal(){ modal.style.display="none"; }
 
-/* ====== הוספת שורה ====== */
+function updateTotal() {
+  document.getElementById("grandTotal").innerText = total.toFixed(2);
+}
+
+/* ====== כפתור שינוי גוון ₪500 ====== */
+function addColorChange() {
+  const item = "שינוי גוון";
+  const rowPrice = 500;
+
+  total += rowPrice;
+  updateTotal();
+
+  const tr = document.createElement("tr");
+  tr.dataset.item = item;
+  tr.innerHTML = `
+    <td dir="rtl">${formatItemHTML(item)}</td>
+    <td>—</td>
+    <td>1</td>
+    <td>—</td>
+    <td>—</td>
+    <td>${rowPrice.toFixed(2)}</td>
+    <td><button class="delete-btn" type="button">🗑️</button></td>
+  `;
+
+  tr.querySelector(".delete-btn").onclick = () => {
+    total -= rowPrice;
+    updateTotal();
+    tr.remove();
+  };
+
+  tbody.appendChild(tr);
+}
+
+/* ====== הוספת פריט רגיל ====== */
 function addRow(){
   const item = itemSelect.value;
   const colorVal = document.getElementById("color").value;
@@ -290,11 +334,10 @@ function addRow(){
   const rowPrice = totalMeters * pricePerMeter * HANDS_FACTOR[hands];
 
   total += rowPrice;
-  document.getElementById("grandTotal").innerText = total.toFixed(2);
+  updateTotal();
 
   const tr = document.createElement("tr");
   tr.dataset.item = item;
-  tr.dataset.price = rowPrice;
 
   tr.innerHTML = `
     <td dir="rtl">${formatItemHTML(item)}</td>
@@ -308,7 +351,7 @@ function addRow(){
 
   tr.querySelector(".delete-btn").onclick = () => {
     total -= rowPrice;
-    document.getElementById("grandTotal").innerText = total.toFixed(2);
+    updateTotal();
     tr.remove();
   };
 
@@ -328,16 +371,15 @@ async function generatePDF(){
   pdfTable.innerHTML = "";
 
   document.querySelectorAll("#tableBody tr").forEach(row => {
-    const cells = row.querySelectorAll("td");
+    const c = row.querySelectorAll("td");
     const tr = document.createElement("tr");
-
     tr.innerHTML = `
       <td dir="rtl">${formatItemHTML(row.dataset.item)}</td>
-      <td>${cells[1].innerText}</td>
-      <td>${cells[2].innerText}</td>
-      <td>${cells[3].innerText}</td>
-      <td>${cells[4].innerText}</td>
-      <td>${cells[5].innerText}</td>
+      <td>${c[1].innerText}</td>
+      <td>${c[2].innerText}</td>
+      <td>${c[3].innerText}</td>
+      <td>${c[4].innerText}</td>
+      <td>${c[5].innerText}</td>
     `;
     pdfTable.appendChild(tr);
   });
