@@ -57,7 +57,7 @@ th { background:#1f2a44; color:#fff; }
         <th>כמות</th>
         <th>אורך יחידה</th>
         <th>אורך כולל</th>
-        <th>מחיר שורה ₪</th>
+        <th>מחיר ₪</th>
         <th>מחיקה</th>
       </tr>
     </thead>
@@ -89,9 +89,9 @@ th { background:#1f2a44; color:#fff; }
 
     <label>מספר ידיים
       <select id="hands">
-        <option value="1"> יד אחת </option>
-        <option value="2" selected> 2 ידיים </option>
-        <option value="3"> 3 ידיים </option>
+        <option value="1">יד אחת (60%)</option>
+        <option value="2" selected>2 ידיים (100%)</option>
+        <option value="3">3 ידיים (140%)</option>
       </select>
     </label>
 
@@ -114,6 +114,7 @@ th { background:#1f2a44; color:#fff; }
 <div id="pdfWrap">
   <div id="pdfContent" class="pdf">
     <h2 style="text-align:center">הצעת מחיר</h2>
+
     <p>
       <strong>שם לקוח:</strong> <span id="pdfName"></span><br>
       <strong>מס׳ לקוח:</strong> <span id="pdfId"></span><br>
@@ -140,49 +141,58 @@ th { background:#1f2a44; color:#fff; }
 </div>
 
 <script>
+// ===== נתונים =====
 const PRICE_LIST = {
   "לטה / הצללה 20×45": { semi: 4.50, solid: 4.70 },
   "לוח צול על 10 20×95": { semi: 5.20, solid: 5.50 }
 };
 
-const HANDS_FACTOR = {
-  1: 0.6,
-  2: 1.0,
-  3: 1.4
-};
+const HANDS_FACTOR = { 1: 0.6, 2: 1.0, 3: 1.4 };
 
 let total = 0;
 const tbody = document.getElementById("tableBody");
-const itemSelect = document.getElementById("item");
 
-Object.keys(PRICE_LIST).forEach(p => {
+// מילוי פריטים
+const itemSelect = document.getElementById("item");
+Object.keys(PRICE_LIST).forEach(name => {
   const o = document.createElement("option");
-  o.value = p; o.textContent = p;
+  o.value = name;
+  o.textContent = name;
   itemSelect.appendChild(o);
 });
 
-function openModal(){ modal.style.display="flex"; }
-function closeModal(){ modal.style.display="none"; }
+function openModal() {
+  document.getElementById("modal").style.display = "flex";
+}
 
-function addRow(){
-  const item = itemSelect.value;
-  const colorVal = color.value;
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
+}
+
+function addRow() {
+  const item = document.getElementById("item").value;
+  const colorVal = document.getElementById("color").value;
   const hands = Number(document.getElementById("hands").value);
-  const qty = Number(qty.value);
-  const len = Number(len.value);
+  const qty = Number(document.getElementById("qty").value);
+  const len = Number(document.getElementById("len").value);
 
-  if(qty<=0 || len<=0){ alert("כמות ואורך חייבים להיות חיוביים"); return; }
+  if (!item || qty <= 0 || len <= 0) {
+    alert("נא להזין כמות ואורך תקינים");
+    return;
+  }
 
   const pricePerMeter = PRICE_LIST[item][colorVal];
   const factor = HANDS_FACTOR[hands];
+
   const totalMeters = qty * len;
   const rowPrice = totalMeters * pricePerMeter * factor;
 
   total += rowPrice;
-  grandTotal.innerText = total.toFixed(2);
+  document.getElementById("grandTotal").innerText = total.toFixed(2);
 
   const tr = document.createElement("tr");
   tr.dataset.price = rowPrice;
+
   tr.innerHTML = `
     <td>${item}</td>
     <td>${hands}</td>
@@ -192,9 +202,10 @@ function addRow(){
     <td>${rowPrice.toFixed(2)}</td>
     <td><button class="delete-btn">🗑️</button></td>
   `;
-  tr.querySelector("button").onclick = () => {
+
+  tr.querySelector(".delete-btn").onclick = () => {
     total -= rowPrice;
-    grandTotal.innerText = total.toFixed(2);
+    document.getElementById("grandTotal").innerText = total.toFixed(2);
     tr.remove();
   };
 
@@ -202,24 +213,29 @@ function addRow(){
   closeModal();
 }
 
-function generatePDF(){
-  pdfName.innerText = customerName.value || "—";
-  pdfId.innerText = customerId.value || "—";
-  pdfEmail.innerText = customerEmail.value || "—";
-  pdfDate.innerText = new Date().toLocaleDateString("he-IL");
-  pdfTotal.innerText = total.toFixed(2);
+function generatePDF() {
+  document.getElementById("pdfName").innerText = customerName.value || "—";
+  document.getElementById("pdfId").innerText = customerId.value || "—";
+  document.getElementById("pdfEmail").innerText = customerEmail.value || "—";
+  document.getElementById("pdfDate").innerText = new Date().toLocaleDateString("he-IL");
+  document.getElementById("pdfTotal").innerText = total.toFixed(2);
 
   const pdfTable = document.getElementById("pdfTable");
   pdfTable.innerHTML = "";
-  document.querySelectorAll("#tableBody tr").forEach(r=>{
-    pdfTable.appendChild(r.cloneNode(true));
+
+  document.querySelectorAll("#tableBody tr").forEach(row => {
+    pdfTable.appendChild(row.cloneNode(true));
   });
 
-  pdfWrap.style.display="block";
-  html2pdf().from(pdfContent)
-    .set({ filename:"הצעת_מחיר.pdf", jsPDF:{format:"a4"} })
+  document.getElementById("pdfWrap").style.display = "block";
+
+  html2pdf()
+    .from(document.getElementById("pdfContent"))
+    .set({ filename: "הצעת_מחיר.pdf", jsPDF: { format: "a4" } })
     .save()
-    .finally(()=>pdfWrap.style.display="none");
+    .finally(() => {
+      document.getElementById("pdfWrap").style.display = "none";
+    });
 }
 </script>
 
