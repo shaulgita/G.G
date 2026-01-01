@@ -89,6 +89,10 @@
   /* Better page breaking */
   .pdf table { page-break-inside:auto; }
   .pdf tr { page-break-inside:avoid; page-break-after:auto; }
+
+  /* === FIX: table headers on multi-page + stable breaks === */
+  .pdf thead { display: table-header-group; }
+  .pdf tfoot { display: table-footer-group; }
 </style>
 </head>
 
@@ -280,6 +284,18 @@
     return `GG-${randLetters(2)}${num1}-${datePart}-${num2}`;
   }
 
+  // === FIX: wait for images to load (logo) so pdf won't break on multiple rows ===
+  function waitForImages(el){
+    const imgs = Array.from(el.querySelectorAll("img"));
+    return Promise.all(imgs.map(img => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise(resolve => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve(); // don't hang on error
+      });
+    }));
+  }
+
   // ==== Data ====
   const PRICE_LIST = {
     "לטה / הצללה 20×45": { semi: 4.50, solid: 4.70 },
@@ -436,7 +452,8 @@
     addBtn.insertAdjacentElement("afterend", btn);
   })();
 
-  function generatePDF(){
+  // === FIXED PDF GENERATION (stable with many rows) ===
+  async function generatePDF(){
     pdfName.innerText  = customerName.value  || "—";
     pdfId.innerText    = customerId.value    || "—";
     pdfEmail.innerText = customerEmail.value || "—";
@@ -447,11 +464,10 @@
     const pdfTable = document.getElementById("pdfTable");
     pdfTable.innerHTML = "";
 
-    // Build PDF rows from dataset (no innerText issues / keeps correct formatting)
+    // Build PDF rows from dataset
     document.querySelectorAll("#tableBody tr").forEach(row => {
       const tr = document.createElement("tr");
 
-      // tint row
       if (row.dataset.type === "tint") {
         tr.innerHTML = `
           <td dir="rtl">${row.dataset.item}</td>
@@ -465,12 +481,12 @@
         return;
       }
 
-      const item = row.dataset.item || "";
-      const hands = row.dataset.hands || "";
-      const qty = row.dataset.qty || "";
-      const len = row.dataset.len || "";
+      const item   = row.dataset.item || "";
+      const hands  = row.dataset.hands || "";
+      const qty    = row.dataset.qty || "";
+      const len    = row.dataset.len || "";
       const meters = row.dataset.meters || "";
-      const price = Number(row.dataset.price || "0").toFixed(2);
+      const price  = Number(row.dataset.price || "0").toFixed(2);
 
       tr.innerHTML = `
         <td dir="rtl">${formatItemHTML(item)}</td>
@@ -483,23 +499,41 @@
       pdfTable.appendChild(tr);
     });
 
-    // Show -> render -> hide
+    // render off-screen (prevents cut/blank pdf when many rows)
     pdfWrap.style.display = "block";
+    pdfWrap.style.position = "fixed";
+    pdfWrap.style.left = "-10000px";
+    pdfWrap.style.top = "0";
 
     const element = document.getElementById("pdfContent");
     const filename = `הצעת_מחיר_${pdfOrderId.innerText}.pdf`;
 
-    html2pdf()
-      .set({
-        filename,
-        margin: 0,
-        pagebreak: { mode: ["css", "legacy"] },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" }
-      })
-      .from(element)
-      .save()
-      .finally(() => { pdfWrap.style.display = "none"; });
+    try {
+      // wait for layout to settle (critical when table grows)
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+      // wait for logo to load (prevents broken output)
+      await waitForImages(element);
+
+      await html2pdf()
+        .set({
+          filename,
+          margin: 0,
+          pagebreak: { mode: ["css", "legacy"] },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait", compress: true },
+          image: { type: "jpeg", quality: 0.95 },
+          html2canvas: {
+            scale: 1.5,
+            useCORS: true,
+            backgroundColor: "#ffffff",
+            scrollY: 0
+          }
+        })
+        .from(element)
+        .save();
+    } finally {
+      pdfWrap.style.display = "none";
+    }
   }
 
   // Expose for inline onclick
