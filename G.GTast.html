@@ -48,6 +48,16 @@ th { background:#1f2a44; color:#fff; }
   width: auto;
   object-fit: contain;
 }
+  /* תיקון שבירת טבלה ב-PDF */
+.pdf table {
+  page-break-inside: auto;
+}
+
+.pdf tr {
+  page-break-inside: avoid;
+  page-break-after: auto;
+}
+
 
 
 
@@ -167,6 +177,12 @@ th { background:#1f2a44; color:#fff; }
 </div>
 
 <script>
+  function fixRTL(text) {
+  return text
+    .replace(/\s*\/\s*/g, "\u200E/\u200E")   // נועל את הסלאש
+    .replace(/(\d+)/g, "\u00A0$1");          // רווח קשיח לפני מספרים
+}
+
 const PRICE_LIST = {
   "לטה / הצללה 20×45": { semi: 4.50, solid: 4.70 },
   "לוח צול על 7 20×75": { semi: 4.80, solid: 5.00 },
@@ -245,11 +261,8 @@ function addRow(){
   tr.dataset.price = rowPrice;
 
  tr.innerHTML = `
-  <td dir="rtl">
-    ${item
-      .replace("/", " \u200E/ \u200E")
-      .replace(/(\d+)/g, "\u00A0$1")}
-  </td>
+  <td dir="rtl">${fixRTL(item)}</td>
+
   <td>${hands}</td>
   <td>${qty}</td>
   <td>${len}</td>
@@ -283,7 +296,7 @@ function generatePDF(){
     const c = row.querySelectorAll("td");
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${c[0].innerText}</td>
+      <td dir="rtl">${fixRTL(c[0].innerText)}</td>
       <td>${c[1].innerText}</td>
       <td>${c[2].innerText}</td>
       <td>${c[3].innerText}</td>
