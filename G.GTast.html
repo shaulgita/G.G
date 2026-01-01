@@ -33,21 +33,22 @@ th { background:#1f2a44; color:#fff; }
 .pdf td { border:1px solid #ddd; padding:6px; font-size:12px; }
 /* פס עליון ל-PDF */
 .pdf-header {
-  background: #1f2a44;   /* כחול כהה */
-  color: white;
-  padding: 14px 16px;
-  margin: -18mm -15mm 16px -15mm; /* נמתח על כל רוחב הדף */
-  font-size: 20px;
-  font-weight: bold;
-  text-align: center;   /* מירכוז */
+  background: #1f2a44;          /* צבע הפס */
+  margin: -18mm -15mm 16px -15mm;
+  height: 90px;                 /* גובה קבוע לפס */
+  display: flex;
+  align-items: center;          /* ממרכז אנכית */
+  justify-content: center;      /* ממרכז אופקית */
+  padding: 0;                   /* חשוב! */
 }
+
 .pdf-logo {
-  height: 80px;
-  max-height: 80px;
+  height: 90%;                  /* הלוגו ביחס לפס */
+  max-height: 100%;
   width: auto;
   object-fit: contain;
-  vertical-align: middle;
 }
+
 
 
 
