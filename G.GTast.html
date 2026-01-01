@@ -31,6 +31,18 @@ th { background:#1f2a44; color:#fff; }
 .pdf table { width:100%; border-collapse:collapse; }
 .pdf th { background:#1f2a44; color:#fff; padding:6px; }
 .pdf td { border:1px solid #ddd; padding:6px; font-size:12px; }
+/* פס עליון ל-PDF */
+.pdf-header {
+  background: #1f2a44;   /* כחול כהה */
+  color: white;
+  padding: 14px 16px;
+  margin: -18mm -15mm 16px -15mm; /* נמתח על כל רוחב הדף */
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;   /* מירכוז */
+}
+
+
 </style>
 </head>
 
@@ -55,7 +67,7 @@ th { background:#1f2a44; color:#fff; }
         <th>פריט</th>
         <th>ידיים</th>
         <th>כמות</th>
-        <th>אורך  יחידה</th>
+        <th>אורך&nbsp;יחידה</th>
         <th>אורך  כולל</th>
         <th>מחיר</th>
         <th>מחיקה</th>
@@ -113,7 +125,12 @@ th { background:#1f2a44; color:#fff; }
 <!-- PDF -->
 <div id="pdfWrap">
   <div id="pdfContent" class="pdf">
-    <h2 style="text-align:center">הצעת מחיר</h2>
+
+    <div class="pdf-header">
+      ג.ג&nbsp;פתרונות&nbsp;לעץ
+    </div>
+
+    <h2 style="text-align:center">הצעת&nbsp;מחיר</h2>
 
     <p>
       <strong>שם לקוח:</strong> <span id="pdfName"></span><br>
@@ -129,7 +146,7 @@ th { background:#1f2a44; color:#fff; }
           <th>ידיים</th>
           <th>כמות</th>
           <th>אורך&nbsp;יחידה</th>
-         <th>כוללך&nbsp;יחידה</th>
+          <th>כולל&nbsp;יחידה</th>
           <th>מחיר</th>
         </tr>
       </thead>
