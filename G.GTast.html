@@ -8,60 +8,71 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
-body { font-family: Arial, sans-serif; margin:16px; background:#fff; }
-.section { border:1px solid #ddd; border-radius:10px; padding:14px; margin-bottom:16px; background:#fafafa; }
-label { display:block; margin-top:10px; font-weight:700; }
-input, select { width:100%; padding:8px; margin-top:4px; border:1px solid #d1d5db; border-radius:8px; }
-button { padding:10px 16px; font-size:15px; border-radius:10px; border:0; cursor:pointer; }
-.primary { background:#1f6feb; color:#fff; }
-.secondary { background:#e5e7eb; }
+  body { font-family: Arial, sans-serif; margin:16px; background:#fff; }
+  .section { border:1px solid #ddd; border-radius:10px; padding:14px; margin-bottom:16px; background:#fafafa; }
+  label { display:block; margin-top:10px; font-weight:700; }
+  input, select { width:100%; padding:8px; margin-top:4px; border:1px solid #d1d5db; border-radius:8px; }
+  button { padding:10px 16px; font-size:15px; border-radius:10px; border:0; cursor:pointer; }
+  .primary { background:#1f6feb; color:#fff; }
+  .secondary { background:#e5e7eb; }
 
-table { width:100%; border-collapse:collapse; margin-top:12px; }
-th, td { border-bottom:1px solid #ddd; padding:8px; text-align:right; }
-th { background:#1f2a44; color:#fff; }
+  table { width:100%; border-collapse:collapse; margin-top:12px; }
+  th, td { border-bottom:1px solid #ddd; padding:8px; text-align:right; }
+  th { background:#1f2a44; color:#fff; }
 
-.total { margin-top:14px; font-size:18px; font-weight:800; }
-.delete-btn { background:none; border:none; font-size:18px; cursor:pointer; }
+  .total { margin-top:14px; font-size:18px; font-weight:800; }
+  .delete-btn { background:none; border:none; font-size:18px; cursor:pointer; }
 
-.modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); align-items:center; justify-content:center; }
-.modal .box { background:#fff; padding:16px; border-radius:12px; width:min(520px,92vw); }
+  .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); align-items:center; justify-content:center; }
+  .modal .box { background:#fff; padding:16px; border-radius:12px; width:min(520px,92vw); }
 
-#pdfWrap { display:none; }
-.pdf { direction:rtl; padding:18mm 15mm; font-family:Arial; }
-.pdf table { width:100%; border-collapse:collapse; }
-.pdf th { background:#1f2a44; color:#fff; padding:6px; }
-.pdf td { border:1px solid #ddd; padding:6px; font-size:12px; }
-/* פס עליון ל-PDF */
-.pdf-header {
-  background: #1f2a44;          /* צבע הפס */
-  margin: -18mm -15mm 16px -15mm;
-  height: 95px;                 /* גובה קבוע לפס */
-  display: flex;
-  align-items: center;          /* ממרכז אנכית */
-  justify-content: center;      /* ממרכז אופקית */
-  padding: 0;                   /* חשוב! */
-}
+  /* ========= PDF ========= */
+  /* חשוב: לא display:none כדי ש-html2canvas יוכל לצלם גם כשיש הרבה שורות */
+  #pdfWrap { position:fixed; left:-9999px; top:0; width:210mm; }
 
-.pdf-logo {
-  height: 98%;                  /* הלוגו ביחס לפס */
-  max-height: 100%;
-  width: auto;
-  object-fit: contain;
-}
-  /* תיקון שבירת טבלה ב-PDF */
-.pdf table {
-  page-break-inside: auto;
-}
+  .pdf {
+    direction: rtl;
+    width: 210mm;
+    min-height: 297mm;
+    box-sizing: border-box;
+    padding: 18mm 15mm;
+    font-family: Arial;
+    background:#fff;
+  }
 
-.pdf tr {
-  page-break-inside: avoid;
-  page-break-after: auto;
-}
+  .pdf-header {
+    background: #1f2a44;
+    margin: -18mm -15mm 16px -15mm;
+    height: 95px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .pdf-logo {
+    height: 98%;
+    max-height: 100%;
+    width: auto;
+    object-fit: contain;
+  }
 
+  .pdf table { width:100%; border-collapse:collapse; }
+  .pdf th { background:#1f2a44; color:#fff; padding:6px; }
+  .pdf td { border:1px solid #ddd; padding:6px; font-size:12px; }
 
+  /* רב-עמודים תקין: כותרת טבלה חוזרת + שורות לא נשברות באמצע */
+  .pdf thead { display: table-header-group; }
+  .pdf tfoot { display: table-footer-group; }
+  .pdf table { page-break-inside: auto; }
+  .pdf tr { page-break-inside: avoid; page-break-after: auto; }
 
-
-
+  /* תיקון RTL/LTR בתוך טקסט עברי */
+  .ltr {
+    direction: ltr;
+    unicode-bidi: isolate;
+    display: inline-block;
+    white-space: nowrap;
+  }
 </style>
 </head>
 
@@ -87,7 +98,7 @@ th { background:#1f2a44; color:#fff; }
         <th>ידיים</th>
         <th>כמות</th>
         <th>אורך&nbsp;יחידה</th>
-        <th>אורך  כולל</th>
+        <th>אורך&nbsp;כולל</th>
         <th>מחיר</th>
         <th>מחיקה</th>
       </tr>
@@ -127,11 +138,11 @@ th { background:#1f2a44; color:#fff; }
     </label>
 
     <label>כמות יחידות
-      <input id="qty" type="number" min="1">
+      <input id="qty" type="number" min="1" value="1">
     </label>
 
     <label>אורך יחידה (מ׳)
-      <input id="len" type="number" step="0.01" min="0">
+      <input id="len" type="number" step="0.01" min="0" value="1">
     </label>
 
     <div style="margin-top:12px">
@@ -141,12 +152,12 @@ th { background:#1f2a44; color:#fff; }
   </div>
 </div>
 
-<!-- PDF -->
+<!-- PDF (נמצא מחוץ למסך בשביל צילום) -->
 <div id="pdfWrap">
   <div id="pdfContent" class="pdf">
 
     <div class="pdf-header">
-      <img src="logo.png" class="pdf-logo" crossorigin="anonymous">
+      <img src="./logo.png" class="pdf-logo" alt="logo">
     </div>
 
     <h2 style="text-align:center">הצעת&nbsp;מחיר</h2>
@@ -177,12 +188,22 @@ th { background:#1f2a44; color:#fff; }
 </div>
 
 <script>
-  function fixRTL(text) {
-  return text
-    .replace(/\s*\/\s*/g, "\u200E/\u200E")   // נועל את הסלאש
-    .replace(/(\d+)/g, "\u00A0$1");          // רווח קשיח לפני מספרים
+/* ====== עזר: מציג מספרים/סלאש/× בתוך SPAN LTR בלי רווחים ====== */
+function formatItemHTML(text) {
+  let s = String(text);
+
+  // 80/80 -> <span dir="ltr">80/80</span>
+  s = s.replace(/(\d+)\s*\/\s*(\d+)/g, '<span class="ltr">$1/$2</span>');
+
+  // 70×70 או 70x70 -> <span dir="ltr">70×70</span>
+  s = s.replace(/(\d+)\s*[x×]\s*(\d+)/gi, '<span class="ltr">$1×$2</span>');
+
+  // אם יש 3/10 בתוך טקסט (כמו קורה 3/10) זה כבר נתפס למעלה.
+
+  return s;
 }
 
+/* ====== נתונים ====== */
 const PRICE_LIST = {
   "לטה / הצללה 20×45": { semi: 4.50, solid: 4.70 },
   "לוח צול על 7 20×75": { semi: 4.80, solid: 5.00 },
@@ -228,9 +249,21 @@ const PRICE_LIST = {
 const HANDS_FACTOR = { 1:0.6, 2:1.0, 3:1.4 };
 
 let total = 0;
-const tbody = document.getElementById("tableBody");
 
+const modal = document.getElementById("modal");
+const tbody = document.getElementById("tableBody");
 const itemSelect = document.getElementById("item");
+
+const customerName  = document.getElementById("customerName");
+const customerId    = document.getElementById("customerId");
+const customerEmail = document.getElementById("customerEmail");
+
+const pdfName  = document.getElementById("pdfName");
+const pdfId    = document.getElementById("pdfId");
+const pdfEmail = document.getElementById("pdfEmail");
+const pdfDate  = document.getElementById("pdfDate");
+const pdfTotal = document.getElementById("pdfTotal");
+
 Object.keys(PRICE_LIST).forEach(name => {
   const o = document.createElement("option");
   o.value = name;
@@ -238,11 +271,13 @@ Object.keys(PRICE_LIST).forEach(name => {
   itemSelect.appendChild(o);
 });
 
+/* ====== UI ====== */
 function openModal(){ modal.style.display="flex"; }
 function closeModal(){ modal.style.display="none"; }
 
+/* ====== הוספת שורה ====== */
 function addRow(){
-  const item = document.getElementById("item").value;
+  const item = itemSelect.value;
   const colorVal = document.getElementById("color").value;
   const hands = Number(document.getElementById("hands").value);
   const qty = Number(document.getElementById("qty").value);
@@ -258,19 +293,18 @@ function addRow(){
   document.getElementById("grandTotal").innerText = total.toFixed(2);
 
   const tr = document.createElement("tr");
+  tr.dataset.item = item;
   tr.dataset.price = rowPrice;
 
- tr.innerHTML = `
-  <td dir="rtl">${fixRTL(item)}</td>
-
-  <td>${hands}</td>
-  <td>${qty}</td>
-  <td>${len}</td>
-  <td>${totalMeters.toFixed(2)}</td>
-  <td>${rowPrice.toFixed(2)}</td>
-  <td><button class="delete-btn">🗑️</button></td>
-`;
-
+  tr.innerHTML = `
+    <td dir="rtl">${formatItemHTML(item)}</td>
+    <td>${hands}</td>
+    <td>${qty}</td>
+    <td>${len}</td>
+    <td>${totalMeters.toFixed(2)}</td>
+    <td>${rowPrice.toFixed(2)}</td>
+    <td><button class="delete-btn" type="button">🗑️</button></td>
+  `;
 
   tr.querySelector(".delete-btn").onclick = () => {
     total -= rowPrice;
@@ -282,7 +316,8 @@ function addRow(){
   closeModal();
 }
 
-function generatePDF(){
+/* ====== PDF ====== */
+async function generatePDF(){
   pdfName.innerText = customerName.value || "—";
   pdfId.innerText = customerId.value || "—";
   pdfEmail.innerText = customerEmail.value || "—";
@@ -293,24 +328,37 @@ function generatePDF(){
   pdfTable.innerHTML = "";
 
   document.querySelectorAll("#tableBody tr").forEach(row => {
-    const c = row.querySelectorAll("td");
+    const cells = row.querySelectorAll("td");
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
-      <td dir="rtl">${fixRTL(c[0].innerText)}</td>
-      <td>${c[1].innerText}</td>
-      <td>${c[2].innerText}</td>
-      <td>${c[3].innerText}</td>
-      <td>${c[4].innerText}</td>
-      <td>${c[5].innerText}</td>
+      <td dir="rtl">${formatItemHTML(row.dataset.item)}</td>
+      <td>${cells[1].innerText}</td>
+      <td>${cells[2].innerText}</td>
+      <td>${cells[3].innerText}</td>
+      <td>${cells[4].innerText}</td>
+      <td>${cells[5].innerText}</td>
     `;
     pdfTable.appendChild(tr);
   });
 
-  pdfWrap.style.display="block";
-  html2pdf().from(pdfContent)
-    .set({ filename:"הצעת_מחיר.pdf", jsPDF:{format:"a4"} })
-    .save()
-    .finally(()=>pdfWrap.style.display="none");
+  const element = document.getElementById("pdfContent");
+
+  await html2pdf()
+    .set({
+      filename: "הצעת_מחיר.pdf",
+      margin: 0,
+      pagebreak: { mode: ["css", "legacy"], avoid: ["tr"] },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        scrollY: 0
+      },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    })
+    .from(element)
+    .save();
 }
 </script>
 
