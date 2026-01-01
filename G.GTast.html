@@ -155,7 +155,7 @@ th { background:#1f2a44; color:#fff; }
           <th>ידיים</th>
           <th>כמות</th>
           <th>אורך&nbsp;יחידה</th>
-          <th>כולל&nbsp;אורך</th>
+          <th>אורך&nbsp;כולל</th>
           <th>מחיר</th>
         </tr>
       </thead>
@@ -244,15 +244,20 @@ function addRow(){
   const tr = document.createElement("tr");
   tr.dataset.price = rowPrice;
 
-  tr.innerHTML = `
-    <td dir="rtl">${item.replace("/", " \u200E/ \u200E")}</td>
-    <td>${hands}</td>
-    <td>${qty}</td>
-    <td>${len}</td>
-    <td>${totalMeters.toFixed(2)}</td>
-    <td>${rowPrice.toFixed(2)}</td>
-    <td><button class="delete-btn">🗑️</button></td>
-  `;
+ tr.innerHTML = `
+  <td dir="rtl">
+    ${item
+      .replace("/", " \u200E/ \u200E")
+      .replace(/(\d+)/g, "\u00A0$1")}
+  </td>
+  <td>${hands}</td>
+  <td>${qty}</td>
+  <td>${len}</td>
+  <td>${totalMeters.toFixed(2)}</td>
+  <td>${rowPrice.toFixed(2)}</td>
+  <td><button class="delete-btn">🗑️</button></td>
+`;
+
 
   tr.querySelector(".delete-btn").onclick = () => {
     total -= rowPrice;
