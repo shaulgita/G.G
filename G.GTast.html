@@ -1,145 +1,118 @@
 <!doctype html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>הפקת הצעת מחיר</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>הצעת מחיר</title>
 
-  <!-- PDF: HTML -> PDF (תומך בעברית) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- HTML -> PDF (תומך בעברית) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background:#fff; }
-    h2 { margin: 0 0 10px; }
-    .section {
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 18px;
-      background: #fafafa;
-    }
-    label { display:block; margin-top:10px; font-weight:700; }
-    input, select {
-      width:100%; padding:8px; margin-top:4px; box-sizing:border-box;
-      border:1px solid #d1d5db; border-radius:8px;
-    }
-    button { padding: 8px 16px; cursor:pointer; font-size:14px; border-radius:10px; border:0; }
-    .primary { background:#1f6feb; color:#fff; }
-    .secondary { background:#e5e7eb; }
-    table { width:100%; border-collapse:collapse; margin-top:14px; }
-    th, td { border-bottom:1px solid #ddd; padding:8px; text-align:right; }
-    th { background:#1f2a44; color:#fff; }
-    .total { margin-top: 16px; font-size: 18px; font-weight: 800; }
-    .delete-btn { background:none; border:none; font-size:18px; cursor:pointer; }
-    dialog { border-radius: 12px; padding: 16px; border:0; width:min(520px, 92vw); }
-    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+<style>
+body { font-family: Arial, sans-serif; margin: 16px; background:#fff; }
+h2 { margin: 0 0 10px; }
 
-    /* ====== PDF Template Styles ====== */
-    #pdfWrap { display:none; } /* מוסתר בדף, משמש רק להדפסה ל-PDF */
-    .pdf {
-      direction: rtl;
-      font-family: Arial, sans-serif;
-      color:#111;
-      padding: 18mm 15mm;
-      background:#fff;
-    }
-    .pdf-header {
-      text-align:center;
-      font-size: 20px;
-      font-weight: 800;
-      margin-bottom: 14px;
-    }
-    .pdf-meta {
-      display:flex;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
-      font-size: 12px;
-    }
-    .pdf-meta .box {
-      width: 100%;
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      padding: 10px;
-    }
-    .pdf-meta .box strong { display:inline-block; min-width: 80px; }
-    .pdf-table { width:100%; border-collapse:collapse; margin-top: 10px; }
-    .pdf-table th {
-      background:#1f2a44;
-      color:#fff;
-      padding:8px;
-      font-size: 12px;
-      border:1px solid #1f2a44;
-    }
-    .pdf-table td {
-      padding:8px;
-      font-size: 12px;
-      border:1px solid #e5e7eb;
-    }
-    .pdf-summary {
-      margin-top: 12px;
-      display:flex;
-      justify-content: flex-start;
-      gap: 14px;
-      align-items: center;
-      font-size: 14px;
-      font-weight: 800;
-    }
-    .pdf-line { margin-top: 10px; border-top: 1px solid #e5e7eb; }
-    .pdf-footer { margin-top: 10px; font-size: 11px; color:#6b7280; }
-  </style>
+.section {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+  background: #fafafa;
+}
+
+label { display:block; margin-top:10px; font-weight:700; }
+input, select {
+  width:100%; padding:8px; margin-top:4px;
+  border:1px solid #d1d5db; border-radius:8px;
+}
+
+button {
+  padding:10px 16px; font-size:15px; border-radius:10px;
+  border:0; cursor:pointer;
+}
+.primary { background:#1f6feb; color:#fff; }
+.secondary { background:#e5e7eb; }
+
+table { width:100%; border-collapse:collapse; margin-top:12px; }
+th, td { border-bottom:1px solid #ddd; padding:8px; text-align:right; }
+th { background:#1f2a44; color:#fff; }
+
+.total { margin-top:14px; font-size:18px; font-weight:800; }
+.delete-btn { background:none; border:none; font-size:18px; cursor:pointer; }
+
+.modal {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.4);
+  align-items:center; justify-content:center;
+}
+.modal .box {
+  background:#fff; padding:16px; border-radius:12px;
+  width:min(520px, 92vw);
+}
+
+/* ===== PDF ===== */
+#pdfWrap { display:none; }
+.pdf { direction:rtl; padding:18mm 15mm; font-family:Arial; }
+.pdf h2 { text-align:center; margin-bottom:10px; }
+.pdf .meta { display:flex; gap:10px; margin-bottom:10px; }
+.pdf .meta div { border:1px solid #ddd; border-radius:8px; padding:8px; width:100%; }
+.pdf table { width:100%; border-collapse:collapse; }
+.pdf th { background:#1f2a44; color:#fff; padding:6px; }
+.pdf td { border:1px solid #ddd; padding:6px; font-size:12px; }
+</style>
 </head>
 
 <body>
 
-  <h2>הפקת הצעת מחיר</h2>
+<h2>הפקת הצעת מחיר</h2>
 
-  <!-- פרטי לקוח -->
-  <div class="section">
-    <h3 style="margin:0 0 8px;">פרטי לקוח</h3>
-    <label>שם לקוח
-      <input type="text" id="customerName" placeholder="לדוגמה: ישראל ישראלי">
-    </label>
-    <label>מספר לקוח
-      <input type="text" id="customerId" placeholder="לדוגמה: 10234">
-    </label>
-    <label>כתובת מייל
-      <input type="email" id="customerEmail" placeholder="example@email.com">
-    </label>
+<!-- פרטי לקוח -->
+<div class="section">
+  <h3>פרטי לקוח</h3>
+  <label>שם לקוח
+    <input id="customerName">
+  </label>
+  <label>מספר לקוח
+    <input id="customerId">
+  </label>
+  <label>מייל
+    <input id="customerEmail" type="email">
+  </label>
+</div>
+
+<!-- פריטים -->
+<div class="section">
+  <h3>פריטים</h3>
+  <button class="primary" onclick="openModal()">➕ הוסף פריט</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>פריט</th>
+        <th>כמות</th>
+        <th>אורך יחידה (מ׳)</th>
+        <th>אורך כולל (מ׳)</th>
+        <th>מחיר שורה (₪)</th>
+        <th>מחיקה</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <div class="total">
+    סה״כ: ₪ <span id="grandTotal">0.00</span>
   </div>
 
-  <!-- פריטים -->
-  <div class="section">
-    <div class="row">
-      <h3 style="margin:0;">פריטים</h3>
-      <button class="primary" onclick="openDialog()">➕ הוסף פריט</button>
-    </div>
+  <button class="primary" style="margin-top:12px" onclick="generatePDF()">
+    📄 הפק הצעת מחיר
+  </button>
+</div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>פריט</th>
-          <th>צבע</th>
-          <th>כמות</th>
-          <th>אורך (מ׳)</th>
-          <th>מחיר שורה (₪)</th>
-          <th>מחיקה</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+<!-- מודאל הוספת פריט -->
+<div class="modal" id="modal">
+  <div class="box">
+    <h3>הוספת פריט</h3>
 
-    <div class="total">
-      סה״כ להזמנה: ₪ <span id="grandTotal">0.00</span>
-    </div>
-
-    <div class="row" style="margin-top:14px;">
-      <button class="primary" onclick="generatePDF()">📄 הפק הצעת מחיר</button>
-    </div>
-  </div>
-
-  <!-- חלונית הוספת פריט -->
-  <dialog id="dlg">
     <label>פריט
       <select id="item"></select>
     </label>
@@ -151,219 +124,132 @@
       </select>
     </label>
 
-    <label>כמות יחידות
-      <input type="number" id="qty" min="1" step="1" placeholder="למשל 4">
+    <label>כמות יחידות (מספר קרשים)
+      <input id="qty" type="number" min="1">
     </label>
 
-    <label>אורך במטרים
-      <input type="number" id="len" min="0" step="0.01" placeholder="למשל 2.5">
+    <label>אורך יחידה (מטרים)
+      <input id="len" type="number" step="0.01" min="0">
     </label>
 
-    <div class="row" style="margin-top:14px;">
+    <div style="margin-top:12px">
       <button class="primary" onclick="addRow()">הוסף</button>
-      <button class="secondary" onclick="dlg.close()">ביטול</button>
-    </div>
-  </dialog>
-
-  <!-- ====== HTML template for PDF (hidden) ====== -->
-  <div id="pdfWrap">
-    <div id="pdfContent" class="pdf">
-      <div class="pdf-header">הצעת מחיר לשיוף כללי</div>
-
-      <div class="pdf-meta">
-        <div class="box">
-          <div><strong>שם לקוח:</strong> <span id="pdfName">—</span></div>
-          <div><strong>מספר לקוח:</strong> <span id="pdfId">—</span></div>
-          <div><strong>מייל:</strong> <span id="pdfEmail">—</span></div>
-        </div>
-        <div class="box">
-          <div><strong>תאריך:</strong> <span id="pdfDate">—</span></div>
-          <div><strong>מס׳ הצעה:</strong> <span id="pdfQuoteNo">6202.1.1</span></div>
-        </div>
-      </div>
-
-      <table class="pdf-table">
-        <thead>
-          <tr>
-            <th style="width:44%;">פריט</th>
-            <th style="width:16%;">צבע</th>
-            <th style="width:10%;">כמות</th>
-            <th style="width:14%;">אורך (מ׳)</th>
-            <th style="width:16%;">סה״כ (₪)</th>
-          </tr>
-        </thead>
-        <tbody id="pdfTableBody"></tbody>
-      </table>
-
-      <div class="pdf-summary">
-        <div>סה״כ לתשלום: ₪ <span id="pdfTotal">0.00</span></div>
-      </div>
-
-      <div class="pdf-line"></div>
-      <div class="pdf-footer">
-        הערה: המחיר מחושב לפי מטר רץ ובהתאם לפריטים שנבחרו.
-      </div>
+      <button class="secondary" onclick="closeModal()">ביטול</button>
     </div>
   </div>
+</div>
+
+<!-- PDF -->
+<div id="pdfWrap">
+  <div id="pdfContent" class="pdf">
+    <h2>הצעת מחיר</h2>
+
+    <div class="meta">
+      <div>
+        <strong>שם לקוח:</strong> <span id="pdfName"></span><br>
+        <strong>מס׳ לקוח:</strong> <span id="pdfId"></span><br>
+        <strong>מייל:</strong> <span id="pdfEmail"></span>
+      </div>
+      <div>
+        <strong>תאריך:</strong> <span id="pdfDate"></span>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>פריט</th>
+          <th>כמות</th>
+          <th>אורך יחידה</th>
+          <th>אורך כולל</th>
+          <th>מחיר ₪</th>
+        </tr>
+      </thead>
+      <tbody id="pdfTable"></tbody>
+    </table>
+
+    <h3>סה״כ: ₪ <span id="pdfTotal"></span></h3>
+  </div>
+</div>
 
 <script>
-  // ===== מחירון (תוכל להרחיב לפי הצורך) =====
-  const PRICE_LIST = {
+// ===== מחירון =====
+const PRICE_LIST = {
   "לטה / הצללה 20×45": { semi: 4.50, solid: 4.70 },
   "לוח צול על 10 20×95": { semi: 5.20, solid: 5.50 },
   "לוח צול על 15 20×145": { semi: 6.30, solid: 6.50 },
-  "לוח צול על 20 20×195": { semi: 7.30, solid: 7.50 },
-
-  "קורה 3/5 32×45": { semi: 4.60, solid: 4.80 },
-  "חצי דק 32×70": { semi: 5.00, solid: 5.20 },
-  "קורה 3/10 32×95": { semi: 5.50, solid: 5.70 },
-  "לוח גלריה / דק 32×145": { semi: 6.50, solid: 6.70 },
-  "קורה 3/20 32×195": { semi: 7.50, solid: 7.70 },
-
-  "קורה 5/5 45×45": { semi: 4.80, solid: 5.00 },
-  "קורה 5/7 45×70": { semi: 5.30, solid: 5.50 },
-  "קורה 5/10 45×95": { semi: 5.80, solid: 6.00 },
-  "קורה 5/15 45×145": { semi: 6.80, solid: 7.00 },
-  "קורה 5/20 45×195": { semi: 7.80, solid: 8.00 },
-
-  "80/80 70×70": { semi: 5.80, solid: 6.00 },
-  "150/80 145×70": { semi: 7.30, solid: 7.50 },
-  "200/80 195×70": { semi: 5.70, solid: 5.90 },
-
-  "100/100 85×85": { semi: 6.40, solid: 6.60 },
-  "100/150 145×85": { semi: 7.60, solid: 7.80 },
-  "100/200 195×85": { semi: 8.60, solid: 8.80 },
-  "100/250 240×85": { semi: 9.50, solid: 9.70 },
-  "100/300 280×85": { semi: 10.50, solid: 10.70 },
-
-  "150/150 135×135": { semi: 8.40, solid: 8.60 },
-  "150/200 185×135": { semi: 9.40, solid: 9.60 },
-  "150/250 235×135": { semi: 10.50, solid: 10.70 },
-  "150/300 280×135": { semi: 11.20, solid: 11.50 },
-
-  "200/200 185×185": { semi: 10.40, solid: 10.60 },
-  "200/250 235×185": { semi: 11.40, solid: 11.60 },
-  "200/300 280×185": { semi: 12.30, solid: 12.50 }
+  "קורה 5/10 45×95": { semi: 5.80, solid: 6.00 }
 };
 
+let total = 0;
+const tbody = document.getElementById("tableBody");
 
-  let total = 0;
+// מילוי פריטים
+const itemSelect = document.getElementById("item");
+Object.keys(PRICE_LIST).forEach(p => {
+  const o = document.createElement("option");
+  o.value = p; o.textContent = p;
+  itemSelect.appendChild(o);
+});
 
-  const dlg = document.getElementById("dlg");
-  const tbody = document.getElementById("tableBody");
-  const grandTotal = document.getElementById("grandTotal");
+function openModal(){ document.getElementById("modal").style.display="flex"; }
+function closeModal(){ document.getElementById("modal").style.display="none"; }
 
-  // מילוי רשימת פריטים בחלונית
-  const itemSelect = document.getElementById("item");
-  Object.keys(PRICE_LIST).forEach(name => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    itemSelect.appendChild(opt);
+function addRow(){
+  const item = itemSelect.value;
+  const color = color.value;
+  const qty = Number(document.getElementById("qty").value);
+  const len = Number(document.getElementById("len").value);
+
+  if(qty<=0 || len<=0){ alert("כמות ואורך חייבים להיות חיוביים"); return; }
+
+  const pricePerMeter = PRICE_LIST[item][color];
+  const totalMeters = qty * len;
+  const rowPrice = totalMeters * pricePerMeter;
+
+  total += rowPrice;
+  document.getElementById("grandTotal").innerText = total.toFixed(2);
+
+  const tr = document.createElement("tr");
+  tr.dataset.price = rowPrice;
+  tr.innerHTML = `
+    <td>${item}</td>
+    <td>${qty}</td>
+    <td>${len}</td>
+    <td>${totalMeters.toFixed(2)}</td>
+    <td>${rowPrice.toFixed(2)}</td>
+    <td><button class="delete-btn">🗑️</button></td>
+  `;
+  tr.querySelector("button").onclick = () => {
+    total -= rowPrice;
+    document.getElementById("grandTotal").innerText = total.toFixed(2);
+    tr.remove();
+  };
+
+  tbody.appendChild(tr);
+  closeModal();
+}
+
+// PDF
+function generatePDF(){
+  document.getElementById("pdfName").innerText = customerName.value || "—";
+  document.getElementById("pdfId").innerText = customerId.value || "—";
+  document.getElementById("pdfEmail").innerText = customerEmail.value || "—";
+  document.getElementById("pdfDate").innerText = new Date().toLocaleDateString("he-IL");
+  document.getElementById("pdfTotal").innerText = total.toFixed(2);
+
+  const pdfTable = document.getElementById("pdfTable");
+  pdfTable.innerHTML = "";
+  document.querySelectorAll("#tableBody tr").forEach(r=>{
+    pdfTable.appendChild(r.cloneNode(true));
   });
 
-  function openDialog() {
-    document.getElementById("qty").value = "";
-    document.getElementById("len").value = "";
-    dlg.showModal();
-  }
-
-  function addRow() {
-    const item = itemSelect.value;
-    const color = document.getElementById("color").value;
-    const qty = Number(document.getElementById("qty").value);
-    const len = Number(document.getElementById("len").value);
-
-    if (!item || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(len) || len < 0) {
-      alert("נא למלא פריט, כמות חיובית ואורך תקין");
-      return;
-    }
-
-    const pricePerMeter = PRICE_LIST[item][color];
-    const rowPrice = pricePerMeter * qty * len;
-
-    total += rowPrice;
-    updateTotal();
-
-    const tr = document.createElement("tr");
-    tr.dataset.price = rowPrice;
-
-    tr.innerHTML = `
-      <td>${item}</td>
-      <td>${color === "semi" ? "חצי שקוף" : "אטום"}</td>
-      <td>${qty}</td>
-      <td>${len}</td>
-      <td>${rowPrice.toFixed(2)}</td>
-      <td><button class="delete-btn" title="מחק שורה">🗑️</button></td>
-    `;
-
-    tr.querySelector(".delete-btn").addEventListener("click", () => deleteRow(tr));
-    tbody.appendChild(tr);
-    dlg.close();
-  }
-
-  function deleteRow(row) {
-    total -= Number(row.dataset.price);
-    updateTotal();
-    row.remove();
-  }
-
-  function updateTotal() {
-    grandTotal.textContent = total.toFixed(2);
-  }
-
-  // ===== PDF: HTML -> PDF (עברית תקינה) =====
-  function generatePDF() {
-    // בדיקות מינימליות
-    if (document.querySelectorAll("#tableBody tr").length === 0) {
-      alert("אין פריטים בטבלה. הוסף לפחות פריט אחד לפני הפקת PDF.");
-      return;
-    }
-
-    // מילוי נתונים לתבנית ה-PDF
-    document.getElementById("pdfName").innerText = customerName.value || "—";
-    document.getElementById("pdfId").innerText = customerId.value || "—";
-    document.getElementById("pdfEmail").innerText = customerEmail.value || "—";
-    document.getElementById("pdfDate").innerText = new Date().toLocaleDateString("he-IL");
-    document.getElementById("pdfTotal").innerText = total.toFixed(2);
-
-    // בניית טבלת PDF (בלי עמודת מחיקה)
-    const pdfBody = document.getElementById("pdfTableBody");
-    pdfBody.innerHTML = "";
-
-    document.querySelectorAll("#tableBody tr").forEach(row => {
-      const c = row.querySelectorAll("td");
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${c[0].innerText}</td>
-        <td>${c[1].innerText}</td>
-        <td>${c[2].innerText}</td>
-        <td>${c[3].innerText}</td>
-        <td>${c[4].innerText}</td>
-      `;
-      pdfBody.appendChild(tr);
-    });
-
-    // הראה את אזור ה-PDF רק בזמן ההמרה
-    const pdfWrap = document.getElementById("pdfWrap");
-    pdfWrap.style.display = "block";
-
-    const element = document.getElementById("pdfContent");
-
-    // יצוא PDF
-    html2pdf()
-      .set({
-        margin: [8, 8, 8, 8], // mm
-        filename: "הצעת_מחיר.pdf",
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-      })
-      .from(element)
-      .save()
-      .finally(() => {
-        pdfWrap.style.display = "none";
-      });
-  }
+  document.getElementById("pdfWrap").style.display="block";
+  html2pdf().from(document.getElementById("pdfContent"))
+    .set({ filename:"הצעת_מחיר.pdf", jsPDF:{format:"a4"} })
+    .save()
+    .finally(()=>document.getElementById("pdfWrap").style.display="none");
+}
 </script>
 
 </body>
