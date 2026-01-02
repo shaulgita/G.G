@@ -348,13 +348,13 @@
 
     <!-- UPDATED: aligned discount row -->
     <div class="pdf-summary">
-      <span>:סך הנחה </span>
+      <span>:&nbsp;סך הנחה </span>
       <span class="ltr">(<span id="pdfDiscountPct">0</span>%) ₪ <span id="pdfDiscount">0.00</span></span>
     </div>
 
     <!-- UPDATED: aligned payable row (LAST + bigger) -->
     <div class="pdf-payable">
-      <span><strong>:סה״כ לתשלום </strong></span>
+      <span><strong>:&nbsp;סה״כ לתשלום </strong></span>
       <span class="ltr">₪ <span id="pdfPayable">0.00</span></span>
     </div>
 
@@ -412,12 +412,15 @@
   }
 
   function makeOrderId() {
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const randLetters = (n) => {
-      const arr = new Uint32Array(n);
-      crypto.getRandomValues(arr);
-      return [...arr].map(x => letters[x % letters.length]).join("");
-    };
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // בלי O/0, I/1 כדי שלא יתבלבל
+  const n = 5;
+  const arr = new Uint32Array(n);
+  crypto.getRandomValues(arr);
+  let out = "";
+  for (let i = 0; i < n; i++) out += chars[arr[i] % chars.length];
+  return out; // לדוגמה: "7KQ3H"
+}
+
 
     const d = new Date();
     const y = String(d.getFullYear()).slice(-2);
