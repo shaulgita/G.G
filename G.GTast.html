@@ -151,8 +151,8 @@
 
   /* סה״כ רגיל קטן ולא מודגש */
   .pdf-subtotal{
-    font-size:16px;     /* תקטין/תגדיל */
-    font-weight:400;    /* לא מודגש */
+    font-size:16px;
+    font-weight:400;
     margin:8px 0;
     white-space:nowrap;
   }
@@ -163,8 +163,6 @@
   }
 
   /* === ALIGN FIX (PDF + Screen) === */
-
-  /* מסדר את שורת הסיכומים במסך (מתחת לטבלה) */
   .totals-line{
     display:flex;
     align-items:baseline;
@@ -178,7 +176,6 @@
     margin-inline-start:auto;
   }
 
-  /* מסדר את שורות הסיכום ב-PDF בצורה אחידה (תווית/ערך) */
   .pdf-subtotal,
   .pdf-summary,
   .pdf-payable{
@@ -189,7 +186,6 @@
     white-space:nowrap;
   }
 
-  /* מוודא שהחלק של המספרים תמיד “צמוד” ולא נשבר */
   .pdf-subtotal .ltr,
   .pdf-summary .ltr,
   .pdf-payable .ltr{
@@ -232,7 +228,6 @@
     סה״כ&nbsp;: ₪ <span id="grandTotal">0.00</span>
   </div>
 
-  <!-- NEW: totals with discount (formatted) -->
   <div class="totals-box">
     <div class="totals-line">
       <span>
@@ -249,11 +244,9 @@
 
   <div class="tools-row">
     <button class="primary" style="margin-top:12px" onclick="generatePDF()">📄 הפק הצעת מחיר</button>
-    <!-- (כפתור שינוי גוון + שדה הנחה יוכנסו ע"י JS ליד כפתור "הוסף פריט") -->
   </div>
 </div>
 
-<!-- מודאל -->
 <div class="modal" id="modal">
   <div class="box">
     <h3>הוספת פריט</h3>
@@ -292,7 +285,6 @@
   </div>
 </div>
 
-<!-- PDF -->
 <div id="pdfWrap">
   <div id="pdfContent" class="pdf">
 
@@ -303,14 +295,12 @@
     <h2 style="text-align:center">הצעת&nbsp;מחיר</h2>
 
     <div class="pdf-top">
-      <!-- צד ימין: פרטי העסק -->
       <div class="pdf-biz">
         <div class="pdf-biz-line"><span class="pdf-biz-ico">🏢</span><span>ג.ג&nbsp;פתרונות&nbsp;לעץ</span></div>
         <div class="pdf-biz-line"><span class="pdf-biz-ico">📞</span><span class="ltr">050-669-0899</span></div>
         <div class="pdf-biz-line"><span class="pdf-biz-ico">📍</span><span>אבן&nbsp;יהודה</span></div>
       </div>
 
-      <!-- צד שמאל: פרטי הלקוח -->
       <div class="pdf-cust">
         <div><strong>:&nbsp;שם&nbsp;לקוח</strong> <span id="pdfName"></span></div>
         <div><strong>:&nbsp;מס׳&nbsp;פלאפון&nbsp;לקוח</strong> <span id="pdfId"></span></div>
@@ -340,26 +330,22 @@
       <tbody id="pdfTable"></tbody>
     </table>
 
-    <!-- UPDATED: aligned subtotal row -->
     <h3 class="pdf-subtotal">
       <span>:סה״כ</span>
       <span class="ltr">₪ <span id="pdfTotal"></span></span>
     </h3>
 
-    <!-- UPDATED: aligned discount row -->
     <div class="pdf-summary">
       <span>:&nbsp;סך הנחה </span>
       <span class="ltr">(<span id="pdfDiscountPct">0</span>%) ₪ <span id="pdfDiscount">0.00</span></span>
     </div>
 
-    <!-- UPDATED: aligned payable row (LAST + bigger) -->
     <div class="pdf-payable">
       <span><strong>:&nbsp;סה״כ לתשלום </strong></span>
       <span class="ltr">₪ <span id="pdfPayable">0.00</span></span>
     </div>
 
     <div class="pdf-note">המחירים&nbsp;אינם&nbsp;כוללים&nbsp;מע״מ&nbsp;*</div>
-
   </div>
 </div>
 
@@ -376,7 +362,6 @@
   const pdfTotal = document.getElementById("pdfTotal");
   const pdfOrderId = document.getElementById("pdfOrderId");
 
-  // NEW PDF refs
   const pdfDiscount = document.getElementById("pdfDiscount");
   const pdfPayable  = document.getElementById("pdfPayable");
   const pdfDiscountPct = document.getElementById("pdfDiscountPct");
@@ -384,7 +369,6 @@
   const pdfWrap  = document.getElementById("pdfWrap");
   const modal    = document.getElementById("modal");
 
-  // NEW totals refs
   const discountAmountEl = document.getElementById("discountAmount");
   const payableTotalEl = document.getElementById("payableTotal");
   const discountPctViewEl = document.getElementById("discountPctView");
@@ -392,49 +376,24 @@
   // ==== Helpers ====
   function formatItemHTML(text) {
     let s = String(text || "").replace(/\s+/g, " ").trim();
-
-    // Add space between Hebrew and number: הצללה20×45 => הצללה 20×45
     s = s.replace(/([\u0590-\u05FF])(\d)/g, "$1 $2");
-
-    // Slash between words (Heb/Eng) - keep in place in RTL
-    s = s.replace(
-      /([\u0590-\u05FFA-Za-z])\s*\/\s*([\u0590-\u05FFA-Za-z])/gu,
-      "$1 \u200F/\u200F $2"
-    );
-
-    // Numeric fraction 80/80 (no spaces) and isolate LTR
+    s = s.replace(/([\u0590-\u05FFA-Za-z])\s*\/\s*([\u0590-\u05FFA-Za-z])/gu, "$1 \u200F/\u200F $2");
     s = s.replace(/(\d+)\s*\/\s*(\d+)/g, '<span class="ltr">$1/$2</span>');
-
-    // Dimensions 70×70 or 70x70 (no spaces) and isolate LTR
     s = s.replace(/(\d+)\s*[x×]\s*(\d+)/gi, '<span class="ltr">$1×$2</span>');
-
     return s;
   }
 
+  // ✅ FIX: מספר הזמנה קצר (5 תווים) בלי קוד ישן שמפיל את ה-JS
   function makeOrderId() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // בלי O/0, I/1 כדי שלא יתבלבל
-  const n = 5;
-  const arr = new Uint32Array(n);
-  crypto.getRandomValues(arr);
-  let out = "";
-  for (let i = 0; i < n; i++) out += chars[arr[i] % chars.length];
-  return out; // לדוגמה: "7KQ3H"
-}
-
-
-    const d = new Date();
-    const y = String(d.getFullYear()).slice(-2);
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const datePart = `${y}${m}${day}`;
-
-    const num1 = Math.floor(100 + Math.random() * 900);
-    const num2 = Math.floor(1000 + Math.random() * 9000);
-
-    return `GG-${randLetters(2)}${num1}-${datePart}-${num2}`;
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // בלי O/0, I/1
+    const n = 5;
+    const arr = new Uint32Array(n);
+    crypto.getRandomValues(arr);
+    let out = "";
+    for (let i = 0; i < n; i++) out += chars[arr[i] % chars.length];
+    return out; // לדוגמה: "7KQ3H"
   }
 
-  // === wait for images to load (logo) so pdf won't break ===
   function waitForImages(el){
     const imgs = Array.from(el.querySelectorAll("img"));
     return Promise.all(imgs.map(img => {
@@ -490,17 +449,14 @@
   };
 
   const HANDS_FACTOR = { 1:0.6, 2:1.0, 3:1.4 };
-
-  // Add-on: שינוי גוון fixed price 500₪
   const EXTRA_TINT = { name: "שינוי&nbsp;גוון", price: 500 };
 
   // ==== State ====
-  let total = 0;            // subtotal before discount
-  let discountPct = 0;      // 0-100
+  let total = 0;
+  let discountPct = 0;
   const tbody = document.getElementById("tableBody");
   const itemSelect = document.getElementById("item");
 
-  // Fill select
   Object.keys(PRICE_LIST).forEach(name => {
     const o = document.createElement("option");
     o.value = name;
@@ -508,17 +464,12 @@
     itemSelect.appendChild(o);
   });
 
-  // ==== Discount helpers ====
   function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
-
   function calcDiscountAmount(){
     const pct = clamp(Number(discountPct) || 0, 0, 100);
     return total * (pct / 100);
   }
-
-  function calcPayable(){
-    return total - calcDiscountAmount();
-  }
+  function calcPayable(){ return total - calcDiscountAmount(); }
 
   function updateTotalsUI(){
     document.getElementById("grandTotal").innerText = total.toFixed(2);
@@ -531,7 +482,6 @@
     payableTotalEl.innerText = calcPayable().toFixed(2);
   }
 
-  // ==== UI Functions ====
   function openModal(){ modal.style.display="flex"; }
   function closeModal(){ modal.style.display="none"; }
 
@@ -579,11 +529,9 @@
     closeModal();
   }
 
-  // Add-on button: שינוי גוון (500₪) + Discount input next to it
   (function addTintAndDiscountControls(){
     const addBtn = document.querySelector('button.primary[onclick="openModal()"]');
 
-    // Tint button
     const tintBtn = document.createElement("button");
     tintBtn.className = "secondary";
     tintBtn.style.marginInlineStart = "10px";
@@ -619,7 +567,6 @@
       tbody.prepend(tr);
     };
 
-    // Discount input
     const discountBox = document.createElement("div");
     discountBox.className = "discount-wrap";
     discountBox.innerHTML = `
@@ -635,15 +582,12 @@
       updateTotalsUI();
     });
 
-    // Insert after add item button: [הוסף פריט] [שינוי גוון] [הנחה]
     addBtn.insertAdjacentElement("afterend", tintBtn);
     tintBtn.insertAdjacentElement("afterend", discountBox);
 
-    // initial
     updateTotalsUI();
   })();
 
-  // === FIXED PDF GENERATION (stable with many rows) ===
   async function generatePDF(){
     pdfName.innerText  = customerName.value  || "—";
     pdfId.innerText    = customerId.value    || "—";
@@ -652,7 +596,6 @@
 
     pdfOrderId.innerText = makeOrderId();
 
-    // totals in PDF
     pdfTotal.innerText = total.toFixed(2);
 
     const pct = clamp(Number(discountPct) || 0, 0, 100);
@@ -700,7 +643,6 @@
       pdfTable.appendChild(tr);
     });
 
-    // render off-screen
     pdfWrap.style.display = "block";
     pdfWrap.style.position = "fixed";
     pdfWrap.style.left = "-10000px";
@@ -734,7 +676,6 @@
     }
   }
 
-  // Expose for inline onclick
   window.openModal = openModal;
   window.closeModal = closeModal;
   window.addRow = addRow;
