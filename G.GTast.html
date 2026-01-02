@@ -148,19 +148,53 @@
     font-size:22px;
     font-weight:900;
   }
-  /* סה״כ רגיל קטן ולא מודגש */
-.pdf-subtotal{
-  font-size:16px;     /* תקטין/תגדיל */
-  font-weight:400;    /* לא מודגש */
-  margin:8px 0;
-  white-space:nowrap;   
-}
-.ltr{
-  direction:ltr;
-  unicode-bidi:isolate;
-  display:inline-block;
-}
 
+  /* סה״כ רגיל קטן ולא מודגש */
+  .pdf-subtotal{
+    font-size:16px;     /* תקטין/תגדיל */
+    font-weight:400;    /* לא מודגש */
+    margin:8px 0;
+    white-space:nowrap;
+  }
+  .ltr{
+    direction:ltr;
+    unicode-bidi:isolate;
+    display:inline-block;
+  }
+
+  /* === ALIGN FIX (PDF + Screen) === */
+
+  /* מסדר את שורת הסיכומים במסך (מתחת לטבלה) */
+  .totals-line{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:16px;
+  }
+  .totals-line > span{
+    white-space:nowrap;
+  }
+  .payable-line{
+    margin-inline-start:auto;
+  }
+
+  /* מסדר את שורות הסיכום ב-PDF בצורה אחידה (תווית/ערך) */
+  .pdf-subtotal,
+  .pdf-summary,
+  .pdf-payable{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:16px;
+    white-space:nowrap;
+  }
+
+  /* מוודא שהחלק של המספרים תמיד “צמוד” ולא נשבר */
+  .pdf-subtotal .ltr,
+  .pdf-summary .ltr,
+  .pdf-payable .ltr{
+    white-space:nowrap;
+  }
 </style>
 </head>
 
@@ -306,29 +340,25 @@
       <tbody id="pdfTable"></tbody>
     </table>
 
+    <!-- UPDATED: aligned subtotal row -->
     <h3 class="pdf-subtotal">
-       :&nbsp;סה״כ&nbsp;
-       <span class="ltr">₪ <span id="pdfTotal"></span></span>
+      <span>סה״כ :</span>
+      <span class="ltr">₪ <span id="pdfTotal"></span></span>
     </h3>
 
-
-    <!-- NEW: discount summary in PDF (formatted like requested) -->
+    <!-- UPDATED: aligned discount row -->
     <div class="pdf-summary">
-      <strong>:&nbsp;סך&nbsp;הנחה</strong>
-      <span class="ltr"><span id="pdfDiscountPct">0</span>%</span>
-      &nbsp;|&nbsp;
-      <span id="pdfDiscount">0.00</span>&nbsp;₪
+      <span>סך הנחה :</span>
+      <span class="ltr">(<span id="pdfDiscountPct">0</span>%) ₪ <span id="pdfDiscount">0.00</span></span>
     </div>
-   
-    <!-- NEW: payable LAST + bigger -->
+
+    <!-- UPDATED: aligned payable row (LAST + bigger) -->
     <div class="pdf-payable">
-      <span><strong>:&nbsp;סה״כ&nbsp;לתשלום</strong></span>
-      <span id="pdfPayable">0.00</span> &nbsp;₪
+      <span><strong>סה״כ לתשלום :</strong></span>
+      <span class="ltr">₪ <span id="pdfPayable">0.00</span></span>
     </div>
 
-     <!-- keep VAT note above, so the LAST line is payable -->
     <div class="pdf-note">המחירים&nbsp;אינם&nbsp;כוללים&nbsp;מע״מ&nbsp;*</div>
-
 
   </div>
 </div>
@@ -602,7 +632,7 @@
       updateTotalsUI();
     });
 
-    // Insert after add item button: [הוסף פריט] [שינוי גוון] [אחוז הנחה]
+    // Insert after add item button: [הוסף פריט] [שינוי גוון] [הנחה]
     addBtn.insertAdjacentElement("afterend", tintBtn);
     tintBtn.insertAdjacentElement("afterend", discountBox);
 
