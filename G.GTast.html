@@ -148,6 +148,13 @@
     font-size:22px;
     font-weight:900;
   }
+  /* סה״כ רגיל קטן ולא מודגש */
+.pdf-subtotal{
+  font-size:16px;     /* תקטין/תגדיל */
+  font-weight:400;    /* לא מודגש */
+  margin:8px 0;
+}
+
 </style>
 </head>
 
@@ -293,7 +300,7 @@
       <tbody id="pdfTable"></tbody>
     </table>
 
-    <h3>סה״כ&nbsp;:&nbsp;₪ <span id="pdfTotal"></span></h3>
+    <h3 class="pdf-subtotal">:&nbsp;סה״כ&nbsp; <span id="pdfTotal"></span></h3>&nbsp;₪
 
     <!-- NEW: discount summary in PDF (formatted like requested) -->
     <div class="pdf-summary">
@@ -302,15 +309,16 @@
       &nbsp;|&nbsp;
       ₪ <span id="pdfDiscount">0.00</span>
     </div>
-
-    <!-- keep VAT note above, so the LAST line is payable -->
-    <div class="pdf-note">המחירים&nbsp;אינם&nbsp;כוללים&nbsp;מע״מ&nbsp;*</div>
-
+   
     <!-- NEW: payable LAST + bigger -->
     <div class="pdf-payable">
       <span><strong>:&nbsp;סה״כ&nbsp;לתשלום</strong></span>
-      &nbsp;₪ <span id="pdfPayable">0.00</span>
+      <span id="pdfPayable">0.00</span> &nbsp;₪
     </div>
+
+     <!-- keep VAT note above, so the LAST line is payable -->
+    <div class="pdf-note">המחירים&nbsp;אינם&nbsp;כוללים&nbsp;מע״מ&nbsp;*</div>
+
 
   </div>
 </div>
