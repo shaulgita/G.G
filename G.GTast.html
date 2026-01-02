@@ -196,7 +196,7 @@
   <div class="totals-box">
     <div class="totals-line">
       <span>
-        :&nbsp;סך&nbsp;הנחה
+        סך&nbsp;הנחה&nbsp;:
         <span class="ltr"><span id="discountPctView">0</span>%</span>
         &nbsp;|&nbsp;
         ₪ <span id="discountAmount">0.00</span>
@@ -300,14 +300,14 @@
       <tbody id="pdfTable"></tbody>
     </table>
 
-    <h3 class="pdf-subtotal">:&nbsp;סה״כ&nbsp; <span id="pdfTotal"></span></h3>&nbsp;₪
+    <h3 class="pdf-subtotal">:&nbsp;סה״כ&nbsp;₪<span id="pdfTotal"></span></h3>
 
     <!-- NEW: discount summary in PDF (formatted like requested) -->
     <div class="pdf-summary">
       <strong>:&nbsp;סך&nbsp;הנחה</strong>
       <span class="ltr"><span id="pdfDiscountPct">0</span>%</span>
       &nbsp;|&nbsp;
-      ₪ <span id="pdfDiscount">0.00</span>
+      <span id="pdfDiscount">0.00</span>&nbsp;₪
     </div>
    
     <!-- NEW: payable LAST + bigger -->
@@ -580,7 +580,7 @@
     const discountBox = document.createElement("div");
     discountBox.className = "discount-wrap";
     discountBox.innerHTML = `
-      <label for="discountPct">אחוז הנחה</label>
+      <label for="discountPct">הנחה</label>
       <input id="discountPct" type="number" inputmode="decimal" min="0" max="100" step="0.01" placeholder="0">
       <span class="ltr">%</span>
     `;
