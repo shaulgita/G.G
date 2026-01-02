@@ -153,6 +153,12 @@
   font-size:16px;     /* תקטין/תגדיל */
   font-weight:400;    /* לא מודגש */
   margin:8px 0;
+  white-space:nowrap;   
+}
+.ltr{
+  direction:ltr;
+  unicode-bidi:isolate;
+  display:inline-block;
 }
 
 </style>
@@ -202,7 +208,7 @@
         ₪ <span id="discountAmount">0.00</span>
       </span>
       <span class="payable-line">
-        <strong>:&nbsp;סה״כ&nbsp;לתשלום ₪ <span id="payableTotal">0.00</span></strong>
+        <strong>&nbsp;סה״כ&nbsp;לתשלום&nbsp;: ₪ <span id="payableTotal">0.00</span></strong>
       </span>
     </div>
   </div>
@@ -300,7 +306,11 @@
       <tbody id="pdfTable"></tbody>
     </table>
 
-    <h3 class="pdf-subtotal">:&nbsp;סה״כ&nbsp;₪<span id="pdfTotal"></span></h3>
+    <h3 class="pdf-subtotal">
+       :&nbsp;סה״כ&nbsp;
+       <span class="ltr">₪ <span id="pdfTotal"></span></span>
+    </h3>
+
 
     <!-- NEW: discount summary in PDF (formatted like requested) -->
     <div class="pdf-summary">
