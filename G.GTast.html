@@ -133,7 +133,21 @@
     justify-content:space-between;
     gap:12px;
   }
-  .totals-line strong{ font-size:18px; }
+
+  /* NEW: make payable line bigger */
+  .payable-line strong{ font-size:22px; font-weight:900; }
+
+  /* NEW: PDF summary / payable */
+  .pdf-summary{
+    margin-top:6px;
+    font-size:12px;
+    line-height:1.6;
+  }
+  .pdf-payable{
+    margin-top:8px;
+    font-size:22px;
+    font-weight:900;
+  }
 </style>
 </head>
 
@@ -144,7 +158,7 @@
 <div class="section">
   <h3>פרטי לקוח</h3>
   <label>שם לקוח <input id="customerName"></label>
-  <label>מס׳ פלאפון לקוח <input id="customerId"></label>
+  <label>נייד <input id="customerId"></label>
   <label>מייל <input id="customerEmail" type="email"></label>
 </div>
 
@@ -168,14 +182,21 @@
   </table>
 
   <div class="total">
-    סה״כ: ₪ <span id="grandTotal">0.00</span>
+    סה״כ&nbsp;: ₪ <span id="grandTotal">0.00</span>
   </div>
 
-  <!-- NEW: totals with discount -->
+  <!-- NEW: totals with discount (formatted) -->
   <div class="totals-box">
     <div class="totals-line">
-      <span>:&nbsp;הנחה ₪ <span id="discountAmount">0.00</span></span>
-      <span><strong>:&nbsp;לתשלום ₪ <span id="payableTotal">0.00</span></strong></span>
+      <span>
+        :&nbsp;סך&nbsp;הנחה
+        <span class="ltr"><span id="discountPctView">0</span>%</span>
+        &nbsp;|&nbsp;
+        ₪ <span id="discountAmount">0.00</span>
+      </span>
+      <span class="payable-line">
+        <strong>:&nbsp;סה״כ&nbsp;לתשלום ₪ <span id="payableTotal">0.00</span></strong>
+      </span>
     </div>
   </div>
 
@@ -273,15 +294,23 @@
     </table>
 
     <h3>סה״כ&nbsp;:&nbsp;₪ <span id="pdfTotal"></span></h3>
-    <!-- NEW: discount in PDF -->
-    <div style="margin-top:6px;font-size:12px;">
-      <strong>:&nbsp;הנחה</strong> ₪ <span id="pdfDiscount">0.00</span>
+
+    <!-- NEW: discount summary in PDF (formatted like requested) -->
+    <div class="pdf-summary">
+      <strong>:&nbsp;סך&nbsp;הנחה</strong>
+      <span class="ltr"><span id="pdfDiscountPct">0</span>%</span>
       &nbsp;|&nbsp;
-      <strong>:&nbsp;לתשלום</strong> ₪ <span id="pdfPayable">0.00</span>
-      &nbsp;(<span class="ltr"><span id="pdfDiscountPct">0</span>%</span>)
+      ₪ <span id="pdfDiscount">0.00</span>
     </div>
 
+    <!-- keep VAT note above, so the LAST line is payable -->
     <div class="pdf-note">המחירים&nbsp;אינם&nbsp;כוללים&nbsp;מע״מ&nbsp;*</div>
+
+    <!-- NEW: payable LAST + bigger -->
+    <div class="pdf-payable">
+      <span><strong>:&nbsp;סה״כ&nbsp;לתשלום</strong></span>
+      &nbsp;₪ <span id="pdfPayable">0.00</span>
+    </div>
 
   </div>
 </div>
@@ -310,6 +339,7 @@
   // NEW totals refs
   const discountAmountEl = document.getElementById("discountAmount");
   const payableTotalEl = document.getElementById("payableTotal");
+  const discountPctViewEl = document.getElementById("discountPctView");
 
   // ==== Helpers ====
   function formatItemHTML(text) {
@@ -441,7 +471,11 @@
 
   function updateTotalsUI(){
     document.getElementById("grandTotal").innerText = total.toFixed(2);
+
+    const pct = clamp(Number(discountPct) || 0, 0, 100);
     const disc = calcDiscountAmount();
+
+    discountPctViewEl.innerText = pct.toFixed(pct % 1 === 0 ? 0 : 2);
     discountAmountEl.innerText = disc.toFixed(2);
     payableTotalEl.innerText = calcPayable().toFixed(2);
   }
@@ -569,11 +603,14 @@
 
     // totals in PDF
     pdfTotal.innerText = total.toFixed(2);
+
+    const pct = clamp(Number(discountPct) || 0, 0, 100);
     const disc = calcDiscountAmount();
     const payable = calcPayable();
+
     pdfDiscount.innerText = disc.toFixed(2);
     pdfPayable.innerText = payable.toFixed(2);
-    pdfDiscountPct.innerText = String(clamp(Number(discountPct)||0,0,100));
+    pdfDiscountPct.innerText = (pct % 1 === 0 ? String(pct.toFixed(0)) : String(pct.toFixed(2)));
 
     const pdfTable = document.getElementById("pdfTable");
     pdfTable.innerHTML = "";
