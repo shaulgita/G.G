@@ -93,6 +93,47 @@
   /* === FIX: table headers on multi-page + stable breaks === */
   .pdf thead { display: table-header-group; }
   .pdf tfoot { display: table-footer-group; }
+
+  /* === NEW: discount controls layout === */
+  .tools-row{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+  .discount-wrap{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 10px;
+    border:1px solid #d1d5db;
+    border-radius:10px;
+    background:#fff;
+  }
+  .discount-wrap label{
+    margin:0;
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .discount-wrap input{
+    width:90px;
+    margin:0;
+    padding:8px;
+    border-radius:10px;
+  }
+
+  .totals-box{
+    margin-top:10px;
+    font-size:14px;
+    line-height:1.6;
+  }
+  .totals-line{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .totals-line strong{ font-size:18px; }
 </style>
 </head>
 
@@ -130,7 +171,18 @@
     סה״כ: ₪ <span id="grandTotal">0.00</span>
   </div>
 
-  <button class="primary" style="margin-top:12px" onclick="generatePDF()">📄 הפק הצעת מחיר</button>
+  <!-- NEW: totals with discount -->
+  <div class="totals-box">
+    <div class="totals-line">
+      <span>הנחה: ₪ <span id="discountAmount">0.00</span></span>
+      <span><strong>לתשלום: ₪ <span id="payableTotal">0.00</span></strong></span>
+    </div>
+  </div>
+
+  <div class="tools-row">
+    <button class="primary" style="margin-top:12px" onclick="generatePDF()">📄 הפק הצעת מחיר</button>
+    <!-- (כפתור שינוי גוון + שדה הנחה יוכנסו ע"י JS ליד כפתור "הוסף פריט") -->
+  </div>
 </div>
 
 <!-- מודאל -->
@@ -192,17 +244,17 @@
 
       <!-- צד שמאל: פרטי הלקוח -->
       <div class="pdf-cust">
-        <div><strong>שם לקוח:</strong> <span id="pdfName"></span></div>
-        <div><strong>מס׳ לקוח:</strong> <span id="pdfId"></span></div>
-        <div><strong>מייל:</strong> <span id="pdfEmail"></span></div>
-        <div><strong>תאריך:</strong> <span id="pdfDate"></span></div>
+        <div><strong>שם&nbsp;לקוח&nbsp;:</strong> <span id="pdfName"></span></div>
+        <div><strong>מס׳&nbsp;פלאפון&nbsp;לקוח&nbsp;:</strong> <span id="pdfId"></span></div>
+        <div><strong>מייל&nbsp;:</strong> <span id="pdfEmail"></span></div>
+        <div><strong>תאריך&nbsp;:</strong> <span id="pdfDate"></span></div>
       </div>
     </div>
 
     <div class="order-row">
-      <div class="order-title">פרטי הזמנה</div>
+      <div class="order-title">פרטי&nbsp;הזמנה</div>
       <div class="order-id">
-        <strong>מספר הזמנה:</strong> <span id="pdfOrderId" class="ltr"></span>
+        <strong>מספר&nbsp;הזמנה&nbsp;:</strong> <span id="pdfOrderId" class="ltr"></span>
       </div>
     </div>
 
@@ -220,8 +272,16 @@
       <tbody id="pdfTable"></tbody>
     </table>
 
-    <h3>סה״כ: ₪ <span id="pdfTotal"></span></h3>
-    <div class="pdf-note">*&nbsp;המחירים&nbsp;אינם&nbsp;כוללים&nbsp;מע״מ</div>
+    <h3>סה״כ&nbsp;:&nbsp;₪ <span id="pdfTotal"></span></h3>
+    <!-- NEW: discount in PDF -->
+    <div style="margin-top:6px;font-size:12px;">
+      <strong>הנחה&nbsp;:</strong> ₪ <span id="pdfDiscount">0.00</span>
+      &nbsp;|&nbsp;
+      <strong>לתשלום&nbsp;:</strong> ₪ <span id="pdfPayable">0.00</span>
+      &nbsp;(<span class="ltr"><span id="pdfDiscountPct">0</span>%</span>)
+    </div>
+
+    <div class="pdf-note">המחירים&nbsp;אינם&nbsp;כוללים&nbsp;מע״מ&nbsp;*</div>
 
   </div>
 </div>
@@ -239,8 +299,17 @@
   const pdfTotal = document.getElementById("pdfTotal");
   const pdfOrderId = document.getElementById("pdfOrderId");
 
+  // NEW PDF refs
+  const pdfDiscount = document.getElementById("pdfDiscount");
+  const pdfPayable  = document.getElementById("pdfPayable");
+  const pdfDiscountPct = document.getElementById("pdfDiscountPct");
+
   const pdfWrap  = document.getElementById("pdfWrap");
   const modal    = document.getElementById("modal");
+
+  // NEW totals refs
+  const discountAmountEl = document.getElementById("discountAmount");
+  const payableTotalEl = document.getElementById("payableTotal");
 
   // ==== Helpers ====
   function formatItemHTML(text) {
@@ -284,14 +353,14 @@
     return `GG-${randLetters(2)}${num1}-${datePart}-${num2}`;
   }
 
-  // === FIX: wait for images to load (logo) so pdf won't break on multiple rows ===
+  // === wait for images to load (logo) so pdf won't break ===
   function waitForImages(el){
     const imgs = Array.from(el.querySelectorAll("img"));
     return Promise.all(imgs.map(img => {
       if (img.complete && img.naturalWidth > 0) return Promise.resolve();
       return new Promise(resolve => {
         img.onload = () => resolve();
-        img.onerror = () => resolve(); // don't hang on error
+        img.onerror = () => resolve();
       });
     }));
   }
@@ -345,7 +414,8 @@
   const EXTRA_TINT = { name: "שינוי&nbsp;גוון", price: 500 };
 
   // ==== State ====
-  let total = 0;
+  let total = 0;            // subtotal before discount
+  let discountPct = 0;      // 0-100
   const tbody = document.getElementById("tableBody");
   const itemSelect = document.getElementById("item");
 
@@ -357,13 +427,28 @@
     itemSelect.appendChild(o);
   });
 
+  // ==== Discount helpers ====
+  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+  function calcDiscountAmount(){
+    const pct = clamp(Number(discountPct) || 0, 0, 100);
+    return total * (pct / 100);
+  }
+
+  function calcPayable(){
+    return total - calcDiscountAmount();
+  }
+
+  function updateTotalsUI(){
+    document.getElementById("grandTotal").innerText = total.toFixed(2);
+    const disc = calcDiscountAmount();
+    discountAmountEl.innerText = disc.toFixed(2);
+    payableTotalEl.innerText = calcPayable().toFixed(2);
+  }
+
   // ==== UI Functions ====
   function openModal(){ modal.style.display="flex"; }
   function closeModal(){ modal.style.display="none"; }
-
-  function updateTotalUI() {
-    document.getElementById("grandTotal").innerText = total.toFixed(2);
-  }
 
   function addRow(){
     const item = itemSelect.value;
@@ -379,7 +464,7 @@
     const rowPrice = totalMeters * pricePerMeter * HANDS_FACTOR[hands];
 
     total += rowPrice;
-    updateTotalUI();
+    updateTotalsUI();
 
     const tr = document.createElement("tr");
     tr.dataset.price = String(rowPrice);
@@ -401,7 +486,7 @@
 
     tr.querySelector(".delete-btn").onclick = () => {
       total -= Number(tr.dataset.price || "0");
-      updateTotalUI();
+      updateTotalsUI();
       tr.remove();
     };
 
@@ -409,14 +494,16 @@
     closeModal();
   }
 
-  // Add-on button: שינוי גוון (500₪)
-  (function addTintButton(){
-    const btn = document.createElement("button");
-    btn.className = "secondary";
-    btn.style.marginInlineStart = "10px";
-    btn.textContent = "🎨 שינוי גוון (+500₪)";
-    btn.onclick = () => {
-      // prevent duplicates: only one tint row
+  // Add-on button: שינוי גוון (500₪) + Discount input next to it
+  (function addTintAndDiscountControls(){
+    const addBtn = document.querySelector('button.primary[onclick="openModal()"]');
+
+    // Tint button
+    const tintBtn = document.createElement("button");
+    tintBtn.className = "secondary";
+    tintBtn.style.marginInlineStart = "10px";
+    tintBtn.textContent = "🎨 שינוי גוון (+500₪)";
+    tintBtn.onclick = () => {
       const exists = [...tbody.querySelectorAll("tr")].some(r => r.dataset.type === "tint");
       if (exists) return;
 
@@ -426,7 +513,7 @@
       tr.dataset.item = EXTRA_TINT.name;
 
       total += EXTRA_TINT.price;
-      updateTotalUI();
+      updateTotalsUI();
 
       tr.innerHTML = `
         <td dir="rtl">${EXTRA_TINT.name}</td>
@@ -440,16 +527,35 @@
 
       tr.querySelector(".delete-btn").onclick = () => {
         total -= EXTRA_TINT.price;
-        updateTotalUI();
+        updateTotalsUI();
         tr.remove();
       };
 
       tbody.prepend(tr);
     };
 
-    // insert next to "הוסף פריט"
-    const addBtn = document.querySelector('button.primary[onclick="openModal()"]');
-    addBtn.insertAdjacentElement("afterend", btn);
+    // Discount input
+    const discountBox = document.createElement("div");
+    discountBox.className = "discount-wrap";
+    discountBox.innerHTML = `
+      <label for="discountPct">אחוז הנחה</label>
+      <input id="discountPct" type="number" inputmode="decimal" min="0" max="100" step="0.01" placeholder="0">
+      <span class="ltr">%</span>
+    `;
+
+    const discountInput = discountBox.querySelector("#discountPct");
+    discountInput.addEventListener("input", () => {
+      const val = Number(discountInput.value);
+      discountPct = clamp(isNaN(val) ? 0 : val, 0, 100);
+      updateTotalsUI();
+    });
+
+    // Insert after add item button: [הוסף פריט] [שינוי גוון] [אחוז הנחה]
+    addBtn.insertAdjacentElement("afterend", tintBtn);
+    tintBtn.insertAdjacentElement("afterend", discountBox);
+
+    // initial
+    updateTotalsUI();
   })();
 
   // === FIXED PDF GENERATION (stable with many rows) ===
@@ -458,13 +564,20 @@
     pdfId.innerText    = customerId.value    || "—";
     pdfEmail.innerText = customerEmail.value || "—";
     pdfDate.innerText  = new Date().toLocaleDateString("he-IL");
-    pdfTotal.innerText = total.toFixed(2);
+
     pdfOrderId.innerText = makeOrderId();
+
+    // totals in PDF
+    pdfTotal.innerText = total.toFixed(2);
+    const disc = calcDiscountAmount();
+    const payable = calcPayable();
+    pdfDiscount.innerText = disc.toFixed(2);
+    pdfPayable.innerText = payable.toFixed(2);
+    pdfDiscountPct.innerText = String(clamp(Number(discountPct)||0,0,100));
 
     const pdfTable = document.getElementById("pdfTable");
     pdfTable.innerHTML = "";
 
-    // Build PDF rows from dataset
     document.querySelectorAll("#tableBody tr").forEach(row => {
       const tr = document.createElement("tr");
 
@@ -499,7 +612,7 @@
       pdfTable.appendChild(tr);
     });
 
-    // render off-screen (prevents cut/blank pdf when many rows)
+    // render off-screen
     pdfWrap.style.display = "block";
     pdfWrap.style.position = "fixed";
     pdfWrap.style.left = "-10000px";
@@ -509,10 +622,7 @@
     const filename = `הצעת_מחיר_${pdfOrderId.innerText}.pdf`;
 
     try {
-      // wait for layout to settle (critical when table grows)
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-      // wait for logo to load (prevents broken output)
       await waitForImages(element);
 
       await html2pdf()
