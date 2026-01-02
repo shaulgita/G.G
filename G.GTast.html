@@ -144,7 +144,7 @@
 <div class="section">
   <h3>פרטי לקוח</h3>
   <label>שם לקוח <input id="customerName"></label>
-  <label>מספר לקוח <input id="customerId"></label>
+  <label>מס׳ פלאפון לקוח <input id="customerId"></label>
   <label>מייל <input id="customerEmail" type="email"></label>
 </div>
 
@@ -174,8 +174,8 @@
   <!-- NEW: totals with discount -->
   <div class="totals-box">
     <div class="totals-line">
-      <span>הנחה: ₪ <span id="discountAmount">0.00</span></span>
-      <span><strong>לתשלום: ₪ <span id="payableTotal">0.00</span></strong></span>
+      <span>:&nbsp;הנחה ₪ <span id="discountAmount">0.00</span></span>
+      <span><strong>:&nbsp;לתשלום ₪ <span id="payableTotal">0.00</span></strong></span>
     </div>
   </div>
 
@@ -244,17 +244,17 @@
 
       <!-- צד שמאל: פרטי הלקוח -->
       <div class="pdf-cust">
-        <div><strong>שם&nbsp;לקוח&nbsp;:</strong> <span id="pdfName"></span></div>
-        <div><strong>מס׳&nbsp;פלאפון&nbsp;לקוח&nbsp;:</strong> <span id="pdfId"></span></div>
-        <div><strong>מייל&nbsp;:</strong> <span id="pdfEmail"></span></div>
-        <div><strong>תאריך&nbsp;:</strong> <span id="pdfDate"></span></div>
+        <div><strong>:&nbsp;שם&nbsp;לקוח</strong> <span id="pdfName"></span></div>
+        <div><strong>:&nbsp;מס׳&nbsp;פלאפון&nbsp;לקוח</strong> <span id="pdfId"></span></div>
+        <div><strong>:&nbsp;מייל</strong> <span id="pdfEmail"></span></div>
+        <div><strong>:&nbsp;תאריך</strong> <span id="pdfDate"></span></div>
       </div>
     </div>
 
     <div class="order-row">
       <div class="order-title">פרטי&nbsp;הזמנה</div>
       <div class="order-id">
-        <strong>מספר&nbsp;הזמנה&nbsp;:</strong> <span id="pdfOrderId" class="ltr"></span>
+        <strong>:&nbsp;מספר&nbsp;הזמנה</strong> <span id="pdfOrderId" class="ltr"></span>
       </div>
     </div>
 
@@ -275,9 +275,9 @@
     <h3>סה״כ&nbsp;:&nbsp;₪ <span id="pdfTotal"></span></h3>
     <!-- NEW: discount in PDF -->
     <div style="margin-top:6px;font-size:12px;">
-      <strong>הנחה&nbsp;:</strong> ₪ <span id="pdfDiscount">0.00</span>
+      <strong>:&nbsp;הנחה</strong> ₪ <span id="pdfDiscount">0.00</span>
       &nbsp;|&nbsp;
-      <strong>לתשלום&nbsp;:</strong> ₪ <span id="pdfPayable">0.00</span>
+      <strong>:&nbsp;לתשלום</strong> ₪ <span id="pdfPayable">0.00</span>
       &nbsp;(<span class="ltr"><span id="pdfDiscountPct">0</span>%</span>)
     </div>
 
