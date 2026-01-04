@@ -194,26 +194,20 @@
 
   /* === Mobile fix (SCREEN only) === */
   @media (max-width: 600px) {
+    body { margin: 12px; }
+    * { max-width: 100%; }
 
-    /* שהדף לא “יברח” הצידה */
-    body:not(.pdf-mode) { margin: 12px; }
-    body:not(.pdf-mode) * { max-width: 100%; }
+    .section table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .section table thead,
+    .section table tbody,
+    .section table tr { width: max-content; }
 
-    /* טבלה: גלילה אופקית במקום לשבור את העיצוב */
-    body:not(.pdf-mode) .section table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    body:not(.pdf-mode) .section table thead,
-    body:not(.pdf-mode) .section table tbody,
-    body:not(.pdf-mode) .section table tr { width: max-content; }
+    .totals-line { flex-direction: column; align-items: flex-start; }
+    .totals-line > span { white-space: normal; }
+    .payable-line { margin-inline-start: 0; }
 
-    /* סיכומים במסך: לא לכפות שורה אחת */
-    body:not(.pdf-mode) .totals-line { flex-direction: column; align-items: flex-start; }
-    body:not(.pdf-mode) .totals-line > span { white-space: normal; }
-    body:not(.pdf-mode) .payable-line { margin-inline-start: 0; }
-
-    /* שדה הנחה קצת יותר נוח בנייד */
-    body:not(.pdf-mode) .discount-wrap input { width: 110px; }
+    .discount-wrap input { width: 110px; }
   }
-
 </style>
 </head>
 
@@ -226,6 +220,9 @@
   <label>שם לקוח <input id="customerName"></label>
   <label>נייד <input id="customerId"></label>
   <label>מייל <input id="customerEmail" type="email"></label>
+
+  <!-- ✅ חדש: מספר הזמנה ידני -->
+  <label>מספר הזמנה <input id="orderIdInput" placeholder="הקלד מספר הזמנה (אופציונלי)"></label>
 </div>
 
 <div class="section">
@@ -378,6 +375,9 @@
   const customerId    = document.getElementById("customerId");
   const customerEmail = document.getElementById("customerEmail");
 
+  // ✅ חדש: מספר הזמנה ידני
+  const orderIdInput  = document.getElementById("orderIdInput");
+
   const pdfName  = document.getElementById("pdfName");
   const pdfId    = document.getElementById("pdfId");
   const pdfEmail = document.getElementById("pdfEmail");
@@ -414,7 +414,7 @@
     crypto.getRandomValues(arr);
     let out = "";
     for (let i = 0; i < n; i++) out += chars[arr[i] % chars.length];
-    return out; // לדוגמה: "7KQ3H"
+    return out;
   }
 
   function waitForImages(el){
@@ -617,7 +617,9 @@
     pdfEmail.innerText = customerEmail.value || "—";
     pdfDate.innerText  = new Date().toLocaleDateString("he-IL");
 
-    pdfOrderId.innerText = makeOrderId();
+    // ✅ חדש: אם הוקלד מספר הזמנה ידני – השתמש בו. אחרת צור אוטומטי.
+    const manualOrderId = (orderIdInput.value || "").trim();
+    pdfOrderId.innerText = manualOrderId ? manualOrderId : makeOrderId();
 
     pdfTotal.innerText = total.toFixed(2);
 
@@ -674,9 +676,6 @@
     const element = document.getElementById("pdfContent");
     const filename = `הצעת_מחיר_${pdfOrderId.innerText}.pdf`;
 
-    // ✅ FIX: להפעיל "מצב PDF" כדי שה-CSS של הנייד לא ישפיע על ההמרה
-    document.body.classList.add("pdf-mode");
-
     try {
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       await waitForImages(element);
@@ -698,7 +697,6 @@
         .from(element)
         .save();
     } finally {
-      document.body.classList.remove("pdf-mode"); // ✅ להחזיר מצב רגיל
       pdfWrap.style.display = "none";
     }
   }
