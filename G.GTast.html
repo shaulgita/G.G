@@ -191,27 +191,28 @@
   .pdf-payable .ltr{
     white-space:nowrap;
   }
+
   /* === Mobile fix (SCREEN only) === */
-@media (max-width: 600px) {
+  @media (max-width: 600px) {
 
-  /* שהדף לא “יברח” הצידה */
-  body { margin: 12px; }
-  * { max-width: 100%; }
+    /* שהדף לא “יברח” הצידה */
+    body:not(.pdf-mode) { margin: 12px; }
+    body:not(.pdf-mode) * { max-width: 100%; }
 
-  /* טבלה: גלילה אופקית במקום לשבור את העיצוב */
-  .section table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .section table thead, 
-  .section table tbody, 
-  .section table tr { width: max-content; }
+    /* טבלה: גלילה אופקית במקום לשבור את העיצוב */
+    body:not(.pdf-mode) .section table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    body:not(.pdf-mode) .section table thead,
+    body:not(.pdf-mode) .section table tbody,
+    body:not(.pdf-mode) .section table tr { width: max-content; }
 
-  /* סיכומים במסך: לא לכפות שורה אחת */
-  .totals-line { flex-direction: column; align-items: flex-start; }
-  .totals-line > span { white-space: normal; }
-  .payable-line { margin-inline-start: 0; }
+    /* סיכומים במסך: לא לכפות שורה אחת */
+    body:not(.pdf-mode) .totals-line { flex-direction: column; align-items: flex-start; }
+    body:not(.pdf-mode) .totals-line > span { white-space: normal; }
+    body:not(.pdf-mode) .payable-line { margin-inline-start: 0; }
 
-  /* שדה הנחה קצת יותר נוח בנייד */
-  .discount-wrap input { width: 110px; }
-}
+    /* שדה הנחה קצת יותר נוח בנייד */
+    body:not(.pdf-mode) .discount-wrap input { width: 110px; }
+  }
 
 </style>
 </head>
@@ -405,7 +406,7 @@
     return s;
   }
 
-  // ✅ FIX: מספר הזמנה קצר (5 תווים) בלי קוד ישן שמפיל את ה-JS
+  // מספר הזמנה קצר (5 תווים)
   function makeOrderId() {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // בלי O/0, I/1
     const n = 5;
@@ -673,6 +674,9 @@
     const element = document.getElementById("pdfContent");
     const filename = `הצעת_מחיר_${pdfOrderId.innerText}.pdf`;
 
+    // ✅ FIX: להפעיל "מצב PDF" כדי שה-CSS של הנייד לא ישפיע על ההמרה
+    document.body.classList.add("pdf-mode");
+
     try {
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       await waitForImages(element);
@@ -694,6 +698,7 @@
         .from(element)
         .save();
     } finally {
+      document.body.classList.remove("pdf-mode"); // ✅ להחזיר מצב רגיל
       pdfWrap.style.display = "none";
     }
   }
