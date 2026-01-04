@@ -156,11 +156,6 @@
     margin:8px 0;
     white-space:nowrap;
   }
-  .ltr{
-    direction:ltr;
-    unicode-bidi:isolate;
-    display:inline-block;
-  }
 
   /* === ALIGN FIX (PDF + Screen) === */
   .totals-line{
@@ -169,12 +164,8 @@
     justify-content:space-between;
     gap:16px;
   }
-  .totals-line > span{
-    white-space:nowrap;
-  }
-  .payable-line{
-    margin-inline-start:auto;
-  }
+  .totals-line > span{ white-space:nowrap; }
+  .payable-line{ margin-inline-start:auto; }
 
   .pdf-subtotal,
   .pdf-summary,
@@ -185,126 +176,131 @@
     gap:16px;
     white-space:nowrap;
   }
-
   .pdf-subtotal .ltr,
   .pdf-summary .ltr,
-  .pdf-payable .ltr{
-    white-space:nowrap;
-  }
+  .pdf-payable .ltr{ white-space:nowrap; }
 
   /* === Mobile fix (SCREEN only) === */
-  @media (max-width: 600px) {
+  @media screen and (max-width: 600px) {
     body { margin: 12px; }
-    * { max-width: 100%; }
 
-    .section table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .section table thead,
-    .section table tbody,
-    .section table tr { width: max-content; }
+    /* חשוב: להגביל רק למסך (לא ל-PDF) */
+    #app * { max-width: 100%; }
 
-    .totals-line { flex-direction: column; align-items: flex-start; }
-    .totals-line > span { white-space: normal; }
-    .payable-line { margin-inline-start: 0; }
+    /* טבלה במסך: גלילה אופקית */
+    #app .section table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    #app .section table thead,
+    #app .section table tbody,
+    #app .section table tr { width:max-content; }
 
-    .discount-wrap input { width: 110px; }
+    /* סיכומים במסך: ירידה לשורות */
+    #app .totals-line { flex-direction:column; align-items:flex-start; }
+    #app .totals-line > span { white-space:normal; }
+    #app .payable-line { margin-inline-start:0; }
+
+    /* שדה הנחה */
+    #app .discount-wrap input { width:110px; }
   }
 </style>
 </head>
 
 <body>
 
-<h2>הפקת הצעת מחיר</h2>
+<div id="app">
+  <h2>הפקת הצעת מחיר</h2>
 
-<div class="section">
-  <h3>פרטי לקוח</h3>
-  <label>שם לקוח <input id="customerName"></label>
-  <label>נייד <input id="customerId"></label>
-  <label>מייל <input id="customerEmail" type="email"></label>
+  <div class="section">
+    <h3>פרטי לקוח</h3>
+    <label>שם לקוח <input id="customerName"></label>
+    <label>נייד <input id="customerId"></label>
+    <label>מייל <input id="customerEmail" type="email"></label>
 
-  <!-- ✅ חדש: מספר הזמנה ידני -->
-  <label>מספר הזמנה <input id="orderIdInput" placeholder="הקלד מספר הזמנה (אופציונלי)"></label>
-</div>
-
-<div class="section">
-  <h3>פריטים</h3>
-  <button class="primary" onclick="openModal()">➕ הוסף פריט</button>
-
-  <table>
-    <thead>
-      <tr>
-        <th>פריט</th>
-        <th>ידיים</th>
-        <th>כמות</th>
-        <th>אורך&nbsp;יחידה</th>
-        <th>אורך&nbsp;כולל</th>
-        <th>מחיר</th>
-        <th>מחיקה</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
-
-  <div class="total">
-    סה״כ&nbsp;: ₪ <span id="grandTotal">0.00</span>
+    <!-- מספר הזמנה ידני -->
+    <label>מספר הזמנה <input id="orderIdInput" placeholder="הקלד מספר הזמנה (אופציונלי)"></label>
   </div>
 
-  <div class="totals-box">
-    <div class="totals-line">
-      <span>
-        סך&nbsp;הנחה&nbsp;:
-        <span class="ltr"><span id="discountPctView">0</span>%</span>
-        &nbsp;|&nbsp;
-        ₪ <span id="discountAmount">0.00</span>
-      </span>
-      <span class="payable-line">
-        <strong>&nbsp;סה״כ&nbsp;לתשלום&nbsp;: ₪ <span id="payableTotal">0.00</span></strong>
-      </span>
+  <div class="section">
+    <h3>פריטים</h3>
+    <button class="primary" onclick="openModal()">➕ הוסף פריט</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>פריט</th>
+          <th>ידיים</th>
+          <th>כמות</th>
+          <th>אורך&nbsp;יחידה</th>
+          <th>אורך&nbsp;כולל</th>
+          <th>מחיר</th>
+          <th>מחיקה</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+
+    <div class="total">
+      סה״כ&nbsp;: ₪ <span id="grandTotal">0.00</span>
+    </div>
+
+    <div class="totals-box">
+      <div class="totals-line">
+        <span>
+          סך&nbsp;הנחה&nbsp;:
+          <span class="ltr"><span id="discountPctView">0</span>%</span>
+          &nbsp;|&nbsp;
+          ₪ <span id="discountAmount">0.00</span>
+        </span>
+        <span class="payable-line">
+          <strong>&nbsp;סה״כ&nbsp;לתשלום&nbsp;: ₪ <span id="payableTotal">0.00</span></strong>
+        </span>
+      </div>
+    </div>
+
+    <div class="tools-row">
+      <button class="primary" style="margin-top:12px" onclick="generatePDF()">📄 הפק הצעת מחיר</button>
     </div>
   </div>
 
-  <div class="tools-row">
-    <button class="primary" style="margin-top:12px" onclick="generatePDF()">📄 הפק הצעת מחיר</button>
-  </div>
-</div>
+  <div class="modal" id="modal">
+    <div class="box">
+      <h3>הוספת פריט</h3>
 
-<div class="modal" id="modal">
-  <div class="box">
-    <h3>הוספת פריט</h3>
+      <label>פריט
+        <select id="item"></select>
+      </label>
 
-    <label>פריט
-      <select id="item"></select>
-    </label>
+      <label>סוג צבע
+        <select id="color">
+          <option value="semi">חצי שקוף</option>
+          <option value="solid">אטום</option>
+        </select>
+      </label>
 
-    <label>סוג צבע
-      <select id="color">
-        <option value="semi">חצי שקוף</option>
-        <option value="solid">אטום</option>
-      </select>
-    </label>
+      <label>מספר ידיים
+        <select id="hands">
+          <option value="1">יד אחת (60%)</option>
+          <option value="2" selected>2 ידיים (100%)</option>
+          <option value="3">3 ידיים (140%)</option>
+        </select>
+      </label>
 
-    <label>מספר ידיים
-      <select id="hands">
-        <option value="1">יד אחת (60%)</option>
-        <option value="2" selected>2 ידיים (100%)</option>
-        <option value="3">3 ידיים (140%)</option>
-      </select>
-    </label>
+      <label>כמות יחידות
+        <input id="qty" type="number" min="1">
+      </label>
 
-    <label>כמות יחידות
-      <input id="qty" type="number" min="1">
-    </label>
+      <label>אורך יחידה (מ׳)
+        <input id="len" type="number" step="0.01" min="0">
+      </label>
 
-    <label>אורך יחידה (מ׳)
-      <input id="len" type="number" step="0.01" min="0">
-    </label>
-
-    <div style="margin-top:12px">
-      <button class="primary" onclick="addRow()">הוסף</button>
-      <button class="secondary" onclick="closeModal()">ביטול</button>
+      <div style="margin-top:12px">
+        <button class="primary" onclick="addRow()">הוסף</button>
+        <button class="secondary" onclick="closeModal()">ביטול</button>
+      </div>
     </div>
   </div>
 </div>
 
+<!-- PDF -->
 <div id="pdfWrap">
   <div id="pdfContent" class="pdf">
 
@@ -374,8 +370,6 @@
   const customerName  = document.getElementById("customerName");
   const customerId    = document.getElementById("customerId");
   const customerEmail = document.getElementById("customerEmail");
-
-  // ✅ חדש: מספר הזמנה ידני
   const orderIdInput  = document.getElementById("orderIdInput");
 
   const pdfName  = document.getElementById("pdfName");
@@ -406,9 +400,8 @@
     return s;
   }
 
-  // מספר הזמנה קצר (5 תווים)
   function makeOrderId() {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // בלי O/0, I/1
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const n = 5;
     const arr = new Uint32Array(n);
     crypto.getRandomValues(arr);
@@ -617,7 +610,6 @@
     pdfEmail.innerText = customerEmail.value || "—";
     pdfDate.innerText  = new Date().toLocaleDateString("he-IL");
 
-    // ✅ חדש: אם הוקלד מספר הזמנה ידני – השתמש בו. אחרת צור אוטומטי.
     const manualOrderId = (orderIdInput.value || "").trim();
     pdfOrderId.innerText = manualOrderId ? manualOrderId : makeOrderId();
 
