@@ -10,7 +10,8 @@ permissions:
 
 jobs:
   build_member_file:
-    if: contains(github.event.issue.labels.*.name, 'new-member')
+    if: contains(github.event.issue.labels.*.name, 'new-member') || startsWith(github.event.issue.title, '[NEW MEMBER]')
+
     runs-on: ubuntu-latest
 
     steps:
