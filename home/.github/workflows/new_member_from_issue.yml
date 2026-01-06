@@ -1,15 +1,4 @@
-
-> פעם אחת בלבד: אם אין לך Label בשם `new-member`, תיצור אותו בגיטהאב (Issues → Labels → New label).
-
----
-
-## 3) הוסף GitHub Action שיוצר קובץ בריפו מה-Issue
-צור קובץ חדש:
-- `.github/workflows/new_member_from_issue.yml`
-
-תוכן:
-
-```yaml
+# .github/workflows/new_member_from_issue.yml
 name: Create new member file from Issue
 
 on:
@@ -63,7 +52,8 @@ jobs:
           safe = email.replace("@", "_at_").replace(".", "_")
           safe = re.sub(r"[^a-z0-9_]+", "_", safe)
 
-          base_dir = pathlib.Path("data") / "חברים חדשים"
+          # ✅ ENGLISH folder name (changed from Hebrew)
+          base_dir = pathlib.Path("data") / "new-members"
           base_dir.mkdir(parents=True, exist_ok=True)
 
           out_path = base_dir / f"{safe}.json"
@@ -71,7 +61,6 @@ jobs:
           # Duplicate check
           if out_path.exists():
             print(f"Duplicate: {out_path} already exists.")
-            # create a marker file so workflow can comment later without failing commit step
             pathlib.Path(".duplicate").write_text(email, encoding="utf-8")
             sys.exit(0)
 
@@ -90,7 +79,8 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "data/חברים חדשים" || true
+          # ✅ ENGLISH folder name (changed from Hebrew)
+          git add "data/new-members" || true
           git commit -m "Add new member file" || exit 0
           git push
 
@@ -103,9 +93,9 @@ jobs:
 
           if [ -f ".duplicate" ]; then
             EMAIL=$(cat .duplicate)
-            BODY="⚠️ המשתמש כבר קיים לפי המייל: ${EMAIL} (קובץ כבר קיים בתיקיית data/חברים חדשים)."
+            BODY="⚠️ Member already exists for email: ${EMAIL} (file already exists under data/new-members)."
           else
-            BODY="✅ נוצר קובץ משתמש חדש בתיקיית data/חברים חדשים לפי המייל, ונעשה commit אוטומטי לריפו."
+            BODY="✅ New member file created under data/new-members (committed automatically)."
           fi
 
           curl -s -X POST \
