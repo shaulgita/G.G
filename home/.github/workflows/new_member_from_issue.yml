@@ -1,9 +1,8 @@
-# .github/workflows/new_member_from_issue.yml
 name: Create new member file from Issue
 
 on:
   issues:
-    types: [opened]
+    types: [opened, labeled, edited]
 
 permissions:
   contents: write
@@ -35,10 +34,10 @@ jobs:
           issue = event["issue"]
           body = issue.get("body") or ""
 
-          # Extract JSON block: ```json ... ```
-          m = re.search(r"```json\s*(\{.*?\})\s*```", body, re.S | re.I)
+          # Accept ```json ... ``` or ``` ... ```
+          m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", body, re.S | re.I)
           if not m:
-            print("No JSON block found in issue body.")
+            print("No JSON code block found in issue body. Expected ```json {..} ```")
             sys.exit(1)
 
           payload = json.loads(m.group(1))
@@ -48,58 +47,7 @@ jobs:
             print("Invalid or missing email in JSON payload.")
             sys.exit(1)
 
-          # Sanitize filename from email
           safe = email.replace("@", "_at_").replace(".", "_")
           safe = re.sub(r"[^a-z0-9_]+", "_", safe)
 
-          # ✅ ENGLISH folder name (changed from Hebrew)
           base_dir = pathlib.Path("data") / "new-members"
-          base_dir.mkdir(parents=True, exist_ok=True)
-
-          out_path = base_dir / f"{safe}.json"
-
-          # Duplicate check
-          if out_path.exists():
-            print(f"Duplicate: {out_path} already exists.")
-            pathlib.Path(".duplicate").write_text(email, encoding="utf-8")
-            sys.exit(0)
-
-          payload["createdAt"] = payload.get("createdAt") or datetime.datetime.utcnow().isoformat() + "Z"
-          payload["sourceIssue"] = issue.get("html_url")
-
-          out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-          print(f"Wrote: {out_path}")
-          PY
-
-      - name: Commit & Push (if new file)
-        run: |
-          if [ -f ".duplicate" ]; then
-            echo "Duplicate detected, skipping commit."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # ✅ ENGLISH folder name (changed from Hebrew)
-          git add "data/new-members" || true
-          git commit -m "Add new member file" || exit 0
-          git push
-
-      - name: Comment back on issue
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ISSUE_NUMBER="${{ github.event.issue.number }}"
-          REPO="${{ github.repository }}"
-
-          if [ -f ".duplicate" ]; then
-            EMAIL=$(cat .duplicate)
-            BODY="⚠️ Member already exists for email: ${EMAIL} (file already exists under data/new-members)."
-          else
-            BODY="✅ New member file created under data/new-members (committed automatically)."
-          fi
-
-          curl -s -X POST \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${REPO}/issues/${ISSUE_NUMBER}/comments" \
-            -d "{\"body\": \"${BODY}\"}"
