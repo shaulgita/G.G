@@ -1,4 +1,3 @@
-
 <!-- homepage.html -->
 <!doctype html>
 <html lang="he" dir="rtl">
@@ -6,6 +5,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Homepage</title>
+
+  <!-- חובה: בדיקת התחברות לפני הצגת העמוד -->
+  <script>
+    // אם לא התחברת בדף index.html — חוזר להתחברות
+    if (sessionStorage.getItem("AUTH_OK") !== "1") {
+      window.location.replace("index.html");
+    }
+  </script>
 
   <style>
     :root{
@@ -39,16 +46,41 @@
       border-bottom:1px solid var(--border);
       display:flex;
       align-items:center;
+      justify-content: space-between;
       padding: 0 var(--pad);
       z-index: 1000;
+      gap: 12px;
     }
+
     .site-name{
       font-weight: 800;
       font-size: 20px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 100%;
+      max-width: 70%;
+    }
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn{
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .btn.primary{
+      background: #111;
+      color: #fff;
+      border-color: #111;
     }
 
     /* חלוניות צד — קבועות לאורך כל העמוד (למעט פס הכותרת) */
@@ -96,11 +128,25 @@
       border-radius: 12px;
       background: #fff;
       padding: 16px;
+      max-width: 980px;
+    }
+
+    .navlink{
+      display: inline-block;
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: #111;
+      font-weight: 700;
+      font-size: 14px;
     }
 
     /* רספונסיבי */
     @media (max-width: 900px){
       :root{ --right-width: 200px; --left-width: 1.5cm; }
+      .site-name{ max-width: 55%; }
     }
     @media (max-width: 700px){
       /* במסך קטן: מסתירים את החלוניות כדי שלא יחנקו את התוכן */
@@ -109,6 +155,7 @@
         padding-inline-start: var(--pad);
         padding-inline-end: var(--pad);
       }
+      .site-name{ max-width: 100%; }
     }
   </style>
 </head>
@@ -116,11 +163,23 @@
 <body>
   <header class="topbar">
     <div class="site-name">שם האתר</div>
+
+    <div class="top-actions">
+      <!-- קישור לעמוד הוספת משתמשים (אם קיים אצלך) -->
+      <a class="navlink" href="add-new-mm.html">Add new mm</a>
+
+      <!-- התנתקות -->
+      <button class="btn primary" id="logoutBtn">התנתק</button>
+    </div>
   </header>
 
   <aside class="sidebar right">
     <strong>חלונית ימין (X)</strong>
     <p>תוכן/תפריט/כפתורים וכו׳.</p>
+
+    <hr style="border:none;border-top:1px solid var(--border);margin:12px 0;">
+
+    <a class="navlink" href="add-new-mm.html">הוספת משתמש חדש</a>
   </aside>
 
   <aside class="sidebar left">
@@ -139,5 +198,13 @@
       <p>...</p><p>...</p><p>...</p><p>...</p><p>...</p>
     </div>
   </main>
+
+  <script>
+    // התנתקות
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      sessionStorage.removeItem("AUTH_OK");
+      window.location.href = "index.html";
+    });
+  </script>
 </body>
 </html>
