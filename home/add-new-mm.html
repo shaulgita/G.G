@@ -1,0 +1,490 @@
+<!-- landing.html  (דף נחיתה + טופס "הגש" לפי המבנה שהגדרנו) -->
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>דף נחיתה - הוספת משתמש חדש</title>
+
+  <!-- ליצירת ZIP להורדה (כולל PDF + user.json) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <style>
+    :root{
+      --header-height: 72px;     /* גובה פס הכותרת */
+      --right-width: 260px;      /* X = עובי חלונית ימין */
+      --left-width: 2.2cm;       /* עובי חלונית שמאל בס״מ */
+      --gap: 12px;
+      --pad: 12px;
+
+      --border: #d7dbe2;
+      --bg: #ffffff;
+      --panel: #f6f7f9;
+      --muted: #555;
+      --danger: #b42318;
+      --okbg: #f6fff6;
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color:#111;
+    }
+
+    /* פס כותרת קבוע למעלה */
+    .topbar{
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--header-height);
+      background:#fff;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      padding: 0 var(--pad);
+      z-index: 1000;
+    }
+    .site-name{
+      font-weight: 800;
+      font-size: 20px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 70%;
+    }
+    .top-actions a{
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #fff;
+      color: #111;
+      font-size: 14px;
+    }
+
+    /* חלוניות צד — קבועות לאורך כל העמוד (למעט פס הכותרת) */
+    .sidebar{
+      position: fixed;
+      top: var(--header-height);
+      bottom: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 10px;
+      overflow: auto;
+    }
+
+    /* RTL: inline-start = ימין, inline-end = שמאל */
+    .sidebar.right{
+      inset-inline-start: 0;
+      width: var(--right-width);
+      border-inline-end: 0;
+      border-start-end-radius: 12px;
+      border-end-end-radius: 12px;
+    }
+    .sidebar.left{
+      inset-inline-end: 0;
+      width: var(--left-width);
+      border-inline-start: 0;
+      border-start-start-radius: 12px;
+      border-end-start-radius: 12px;
+    }
+
+    /* תוכן מרכזי */
+    .content{
+      padding: var(--pad);
+      padding-top: calc(var(--header-height) + var(--pad));
+      padding-inline-start: calc(var(--right-width) + var(--gap) + var(--pad));
+      padding-inline-end: calc(var(--left-width) + var(--gap) + var(--pad));
+      min-height: 100vh;
+    }
+
+    .card{
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      padding: 16px;
+      max-width: 980px;
+    }
+
+    h1{ margin: 0 0 10px; font-size: 24px; }
+    .sub{ color: var(--muted); margin: 0 0 14px; font-size: 14px; line-height: 1.5; }
+
+    form{ display: grid; gap: 12px; }
+    .row{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 850px){ .row{ grid-template-columns: 1fr; } }
+
+    label{ font-weight: 700; display: block; margin-bottom: 6px; }
+    .hint{ font-weight: 400; font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    input, select, textarea{
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      background: #fff;
+    }
+    textarea{ min-height: 110px; resize: vertical; }
+
+    .invite-wrap{
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .actions{
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .btn{
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .btn.primary{
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+
+    .error{
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 6px;
+      display: none;
+      line-height: 1.4;
+    }
+
+    .success{
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--okbg);
+      display: none;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* רספונסיבי: במסך קטן מסתירים חלוניות */
+    @media (max-width: 700px){
+      .sidebar{ display:none; }
+      .content{
+        padding-inline-start: var(--pad);
+        padding-inline-end: var(--pad);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="site-name">שם האתר</div>
+    <div class="top-actions">
+      <a href="homepage.html">דף הבית</a>
+    </div>
+  </header>
+
+  <aside class="sidebar right">
+    <strong>תפריט</strong>
+    <p class="hint">אפשר לשים כאן ניווט/כפתורים.</p>
+    <ul style="padding-right:18px; margin:8px 0;">
+      <li><a href="landing.html">Add new mm</a></li>
+    </ul>
+    <hr style="border:none;border-top:1px solid var(--border);margin:12px 0;">
+    <div class="hint">
+      משתמשים נשמרים מקומית בדפדפן לפי מייל + מניעת כפילויות.<br>
+      בלחיצה על "הגש" יורד ZIP עם הנתונים וה-PDF.
+    </div>
+  </aside>
+
+  <aside class="sidebar left"></aside>
+
+  <main class="content">
+    <div class="card">
+      <h1>Add new mm</h1>
+      <p class="sub">
+        דף נחיתה להוספת משתמש חדש. יש בדיקה למניעת כפילויות לפי המייל (email הוא מזהה ייחודי).
+      </p>
+
+      <form id="newMemberForm">
+        <!-- Invitation link display (English) -->
+        <div>
+          <label>Invitation link display:</label>
+          <div class="invite-wrap">
+            <input id="inviteLink" type="text" readonly placeholder="יופיע אוטומטית אחרי הזנת מייל" />
+            <button class="btn" type="button" id="copyInvite">Copy</button>
+          </div>
+          <div class="hint">הקישור נבנה אוטומטית לפי המייל שהוזן (הדגמה).</div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>שם פרטי</label>
+            <input id="firstName" type="text" required />
+          </div>
+          <div>
+            <label>שם משפחה</label>
+            <input id="lastName" type="text" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>מייל</label>
+            <input id="email" type="email" required placeholder="name@example.com" />
+          </div>
+          <div>
+            <label>תחום לימודים</label>
+            <input id="studyField" type="text" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>שנה</label>
+            <select id="studyYear" required>
+              <option value="" selected disabled>בחר</option>
+              <option>א׳</option>
+              <option>ב׳</option>
+              <option>ג׳</option>
+              <option>ד׳</option>
+              <option>בוגר/ת</option>
+              <option>תואר שני</option>
+              <option>אחר</option>
+            </select>
+          </div>
+          <div>
+            <label>מקום לימודים</label>
+            <input id="institution" type="text" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>קוח בקובץ PDF</label>
+            <input id="pdfFile" type="file" accept="application/pdf" required />
+            <div class="hint">הקובץ ייכלל ב-ZIP שיורד אחרי "הגש".</div>
+          </div>
+          <div>
+            <label>ממוצע ציונים (אופציונלי)</label>
+            <input id="avg" type="number" min="0" max="100" step="0.1" placeholder="למשל 87.5" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>קישור ללינקדאין (אופציונלי)</label>
+            <input id="linkedin" type="url" placeholder="https://www.linkedin.com/in/..." />
+          </div>
+          <div>
+            <label>פסקה אישית (אופציונלי)</label>
+            <textarea id="personal" placeholder="כמה משפטים על עצמך..."></textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" type="submit">הגש</button>
+          <button class="btn" type="button" id="exportAll">הורד מאגר משתמשים (JSON)</button>
+          <button class="btn" type="button" id="clearLocal">נקה מאגר מקומי</button>
+        </div>
+
+        <div class="error" id="errBox"></div>
+        <div class="success" id="okBox"></div>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    // --- שמירה מקומית לפי מייל + מניעת כפילויות ---
+    const STORAGE_KEY = "newMembersByEmail_v1";
+
+    const form = document.getElementById("newMemberForm");
+    const errBox = document.getElementById("errBox");
+    const okBox  = document.getElementById("okBox");
+
+    const el = (id) => document.getElementById(id);
+
+    function showError(msg){
+      errBox.textContent = msg;
+      errBox.style.display = "block";
+      okBox.style.display = "none";
+    }
+    function showOk(msg){
+      okBox.innerHTML = msg;
+      okBox.style.display = "block";
+      errBox.style.display = "none";
+    }
+
+    function normalizeEmail(email){
+      return String(email || "").trim().toLowerCase();
+    }
+
+    function safeFolderNameFromEmail(email){
+      // יוצר שם תיקייה "בטוח" (בלי תווים בעייתיים)
+      return email
+        .replaceAll("@", "_at_")
+        .replaceAll(".", "_")
+        .replace(/[^a-z0-9_]/g, "_");
+    }
+
+    function nowStamp(){
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    }
+
+    function loadDb(){
+      try{
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"byEmail":{},"meta":{"version":1,"lastUpdated":null}}');
+      }catch{
+        return { byEmail:{}, meta:{ version:1, lastUpdated:null } };
+      }
+    }
+    function saveDb(db){
+      db.meta.lastUpdated = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    }
+
+    function makeInviteLink(email){
+      // הדגמה: אותו דף עם פרמטר invite
+      const u = new URL(location.href);
+      u.searchParams.set("invite", email);
+      return u.toString();
+    }
+
+    // הצגת קישור הזמנה אוטומטית לפי מייל
+    el("email").addEventListener("input", (e) => {
+      const em = normalizeEmail(e.target.value);
+      el("inviteLink").value = em ? makeInviteLink(em) : "";
+    });
+
+    // Copy
+    el("copyInvite").addEventListener("click", async () => {
+      const v = el("inviteLink").value.trim();
+      if (!v) return showError("אין קישור להעתיק (הכנס מייל קודם).");
+      try{
+        await navigator.clipboard.writeText(v);
+        showOk("הקישור הועתק.");
+      }catch{
+        showError("לא הצלחתי להעתיק. נסה לסמן ולהעתיק ידנית.");
+      }
+    });
+
+    // Export all DB as JSON
+    el("exportAll").addEventListener("click", () => {
+      const db = loadDb();
+      const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+      saveAs(blob, "new-users.json");
+      showOk("המאגר ירד כקובץ new-users.json.");
+    });
+
+    // Clear local DB
+    el("clearLocal").addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_KEY);
+      showOk("המאגר המקומי נוקה.");
+    });
+
+    // Submit
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const firstName = el("firstName").value.trim();
+      const lastName  = el("lastName").value.trim();
+      const email     = normalizeEmail(el("email").value);
+      const studyField= el("studyField").value.trim();
+      const studyYear = el("studyYear").value;
+      const institution = el("institution").value.trim();
+
+      const avgRaw = el("avg").value.trim();
+      const avg = avgRaw ? Number(avgRaw) : null;
+
+      const linkedinRaw = el("linkedin").value.trim();
+      const linkedin = linkedinRaw ? linkedinRaw : null;
+
+      const personalRaw = el("personal").value.trim();
+      const personal = personalRaw ? personalRaw : null;
+
+      const pdfInput = el("pdfFile");
+      const pdfFile = pdfInput.files && pdfInput.files[0] ? pdfInput.files[0] : null;
+
+      // ולידציה בסיסית
+      if (!firstName || !lastName || !email || !studyField || !studyYear || !institution){
+        return showError("יש למלא את כל השדות החובה.");
+      }
+      if (!pdfFile){
+        return showError("חובה להעלות קובץ PDF.");
+      }
+      if (avg !== null && (Number.isNaN(avg) || avg < 0 || avg > 100)){
+        return showError("ממוצע ציונים חייב להיות מספר בין 0 ל-100 (או להשאיר ריק).");
+      }
+
+      // בדיקת כפילות לפי מייל
+      const db = loadDb();
+      if (db.byEmail[email]){
+        return showError(`כבר קיים משתמש עם המייל הזה: ${email}`);
+      }
+
+      // יצירת רשומה
+      const createdAt = new Date().toISOString();
+      const record = {
+        firstName,
+        lastName,
+        email,
+        studyField,
+        studyYear,
+        institution,
+        pdfFileName: pdfFile.name,
+        avg,
+        linkedin,
+        personal,
+        inviteLink: makeInviteLink(email),
+        createdAt
+      };
+
+      // שמירה במאגר המקומי
+      db.byEmail[email] = record;
+      saveDb(db);
+
+      // הורדת ZIP שמדמה "חברים חדשים/<email>/..."
+      try{
+        const zip = new JSZip();
+        const folderName = `חברים חדשים/${safeFolderNameFromEmail(email)}_${nowStamp()}`;
+        const folder = zip.folder(folderName);
+
+        folder.file("user.json", JSON.stringify(record, null, 2));
+
+        // הוספת PDF ל-ZIP
+        const pdfBytes = await pdfFile.arrayBuffer();
+        folder.file(pdfFile.name, pdfBytes);
+
+        const out = await zip.generateAsync({ type: "blob" });
+        saveAs(out, `new-user_${safeFolderNameFromEmail(email)}.zip`);
+
+        showOk(
+          `נשמר בהצלחה לפי מייל: <b>${email}</b><br>` +
+          `ירד אליך ZIP (מדמה תיקייה "חברים חדשים").<br>` +
+          `כמות משתמשים במאגר המקומי: <b>${Object.keys(db.byEmail).length}</b>`
+        );
+
+        form.reset();
+        el("inviteLink").value = "";
+      } catch (err){
+        showError("נשמר מקומית, אבל יצירת ZIP נכשלה. נסה שוב. " + (err?.message || ""));
+      }
+    });
+  </script>
+</body>
+</html>
