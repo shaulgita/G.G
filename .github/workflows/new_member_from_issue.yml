@@ -2,7 +2,7 @@ name: Create new member file from Issue
 
 on:
   issues:
-    types: [opened, labeled, edited]
+    types: [opened]
 
 permissions:
   contents: write
@@ -25,40 +25,78 @@ jobs:
       - name: Parse issue JSON and write member file
         run: |
           python - << 'PY'
-          import json, os, re, pathlib, sys, datetime
+          import json, os, re, pathlib, sys, datetime, hashlib, secrets
 
           with open(os.environ["GITHUB_EVENT_PATH"], "r", encoding="utf-8") as f:
             event = json.load(f)
 
           issue = event["issue"]
-          body = issue.get("body") or ""
+          body = (issue.get("body") or "").strip()
 
-          # Accept ```json ... ``` or ``` ... ```
-          m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", body, re.S | re.I)
-          if not m:
-            print("No JSON code block found. Expected ```json {..} ```")
+          def extract_payload(text: str):
+            # 1) ```json ... ``` or ``` ... ```
+            m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.S | re.I)
+            if m:
+              return json.loads(m.group(1))
+
+            # 2) '''json ... ''' or ''' ... '''
+            m = re.search(r"'''(?:json)?\s*(\{.*?\})\s*'''", text, re.S | re.I)
+            if m:
+              return json.loads(m.group(1))
+
+            # 3) raw JSON only (whole body)
+            if text.startswith("{") and text.endswith("}"):
+              return json.loads(text)
+
+            # 4) fallback: first { ... last }
+            i = text.find("{")
+            j = text.rfind("}")
+            if i != -1 and j != -1 and j > i:
+              return json.loads(text[i:j+1])
+
+            raise ValueError("No JSON found in issue body")
+
+          try:
+            payload = extract_payload(body)
+          except Exception as e:
+            print("No JSON code block found. Paste JSON as ```json { ... } ```")
+            print("Error:", e)
             sys.exit(1)
-
-          payload = json.loads(m.group(1))
 
           email = (payload.get("email") or "").strip().lower()
           if not email or "@" not in email:
             print("Invalid or missing email in JSON payload.")
             sys.exit(1)
 
+          password = (payload.get("password") or "").strip()
+          if len(password) < 6:
+            print("Missing/weak password. Provide 'password' (min 6 chars).")
+            sys.exit(1)
+
+          # Sanitize filename from email
           safe = email.replace("@", "_at_").replace(".", "_")
           safe = re.sub(r"[^a-z0-9_]+", "_", safe)
 
+          # OUTPUT FOLDER (ENGLISH)
           base_dir = pathlib.Path("home") / "data" / "new-members"
           base_dir.mkdir(parents=True, exist_ok=True)
 
           out_path = base_dir / f"{safe}.json"
 
+          # Duplicate check
           if out_path.exists():
             print(f"Duplicate: {out_path} already exists.")
             pathlib.Path(".duplicate").write_text(email, encoding="utf-8")
             sys.exit(0)
 
+          # Hash password (store only salt+hash)
+          salt = secrets.token_hex(16)
+          pwd_hash = hashlib.sha256((salt + password).encode("utf-8")).hexdigest()
+
+          payload.pop("password", None)
+          payload["passwordSalt"] = salt
+          payload["passwordHash"] = pwd_hash
+          payload["passwordAlgo"] = "sha256(salt+password)"
           payload["createdAt"] = payload.get("createdAt") or datetime.datetime.utcnow().isoformat() + "Z"
           payload["sourceIssue"] = issue.get("html_url")
 
@@ -87,9 +125,9 @@ jobs:
 
           if [ -f ".duplicate" ]; then
             EMAIL=$(cat .duplicate)
-            BODY="⚠️ Member already exists for email: ${EMAIL} (file already exists under home/data/new-members)."
+            BODY="⚠️ Duplicate: user already exists for email: ${EMAIL} (file already exists under home/data/new-members)."
           else
-            BODY="✅ New member file created under home/data/new-members (committed automatically)."
+            BODY="✅ Created new member file under home/data/new-members and pushed to repo."
           fi
 
           curl -s -X POST \
